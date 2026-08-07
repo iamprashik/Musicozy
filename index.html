@@ -40,13 +40,32 @@
   <!-- MAIN -->
   <main class="main">
     <header class="main-header">
-      <div class="header-nav">
-        <button class="round-btn" aria-label="Back">‹</button>
-        <button class="round-btn" aria-label="Forward">›</button>
+      <div class="header-left">
+        <div class="logo" aria-label="Amber">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="15" fill="url(#logoGradient)"/>
+            <circle cx="16" cy="16" r="15" stroke="#00000022" stroke-width="1"/>
+            <path d="M13 11.5C13 10.6 13.9 10 14.7 10.4L21.5 14.4C22.3 14.8 22.3 16 21.5 16.4L14.7 20.4C13.9 20.8 13 20.3 13 19.4V11.5Z" fill="#141118"/>
+            <defs>
+              <linearGradient id="logoGradient" x1="1" y1="1" x2="31" y2="31" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#f4c377"/>
+                <stop offset="1" stop-color="#c8862c"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <button class="round-btn" aria-label="Home">⌂</button>
+        <button class="round-btn" aria-label="Search">⌕</button>
       </div>
-      <div class="header-user">
-        <div class="avatar">P</div>
-        <span>Prashik</span>
+      <div class="header-right">
+        <button class="premium-btn">Explore Premium</button>
+        <button class="icon-btn bell-btn" aria-label="Notifications">
+          <span class="bell-dot"></span>🔔
+        </button>
+        <div class="header-user">
+          <div class="avatar">P</div>
+          <span>Prashik</span>
+        </div>
       </div>
     </header>
 
