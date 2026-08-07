@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amber — Late Night Drive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">◐</span>
+      <span class="brand-name">Amber</span>
+    </div>
+
+    <nav class="nav">
+      <a href="#" class="nav-item active"><span class="nav-icon">⌂</span>Home</a>
+      <a href="#" class="nav-item"><span class="nav-icon">⌕</span>Search</a>
+      <a href="#" class="nav-item"><span class="nav-icon">▤</span>Your Library</a>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="playlists">
+      <p class="playlists-label">Playlists</p>
+      <a href="#" class="playlist-item">Late Night Drive</a>
+      <a href="#" class="playlist-item">Sunday Coffee</a>
+      <a href="#" class="playlist-item">Deep Focus</a>
+      <a href="#" class="playlist-item">Rainy Window</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="main-header">
+      <div class="header-nav">
+        <button class="round-btn" aria-label="Back">‹</button>
+        <button class="round-btn" aria-label="Forward">›</button>
+      </div>
+      <div class="header-user">
+        <div class="avatar">P</div>
+        <span>Prashik</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-art">
+        <img src="https://picsum.photos/seed/amberdrive/300/300" alt="">
+      </div>
+      <div class="hero-info">
+        <span class="hero-eyebrow">Playlist</span>
+        <h1 class="hero-title">Late Night Drive</h1>
+        <p class="hero-meta">Prashik · 6 tracks · Golden-hour synths and slow-burn grooves for the road after everyone else is asleep.</p>
+      </div>
+    </section>
+
+    <div class="action-row">
+      <button class="play-pill" id="hero-play" aria-label="Play playlist">▶</button>
+      <button class="round-btn ghost" aria-label="Like playlist">♡</button>
+      <button class="round-btn ghost" aria-label="More options">⋯</button>
+    </div>
+
+    <section class="track-table">
+      <div class="track-row track-row--head">
+        <span class="col-index">#</span>
+        <span class="col-title">Title</span>
+        <span class="col-album">Album</span>
+        <span class="col-duration">⏱</span>
+      </div>
+      <div class="track-list" id="track-list">
+        <!-- rows injected by script.js -->
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- BOTTOM PLAYER BAR -->
+<footer class="player-bar">
+  <div class="player-now-playing">
+    <div class="np-art">
+      <img id="bar-art" src="" alt="">
+    </div>
+    <div class="np-text">
+      <p class="np-title" id="bar-title">—</p>
+      <p class="np-artist" id="bar-artist">—</p>
+    </div>
+    <button class="icon-btn like-btn" id="like-btn" aria-label="Like song">♡</button>
+  </div>
+
+  <div class="player-controls">
+    <div class="control-buttons">
+      <button class="icon-btn" id="shuffle-btn" aria-label="Shuffle">⇄</button>
+      <button class="icon-btn" id="prev-btn" aria-label="Previous">⏮</button>
+      <button class="icon-btn play-btn" id="play-btn" aria-label="Play">▶</button>
+      <button class="icon-btn" id="next-btn" aria-label="Next">⏭</button>
+      <button class="icon-btn" id="repeat-btn" aria-label="Repeat">↻</button>
+    </div>
+    <div class="progress-row">
+      <span class="time-current" id="time-current">0:00</span>
+      <div class="progress-track" id="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+        <div class="progress-handle" id="progress-handle"></div>
+      </div>
+      <span class="time-duration" id="time-duration">0:00</span>
+    </div>
+  </div>
+
+  <div class="player-extra">
+    <span class="vol-icon">🔊</span>
+    <div class="volume-track" id="volume-track">
+      <div class="volume-fill" id="volume-fill"></div>
+      <div class="volume-handle" id="volume-handle"></div>
+    </div>
+  </div>
+</footer>
+
+<audio id="audio"></audio>
+
+<script src="script.js"></script>
+</body>
+</html>
