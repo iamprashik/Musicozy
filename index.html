@@ -6,7 +6,7 @@
 <title>Musicozy — Late Night Drive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,24 +15,22 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="brand">
-      <img src="assets/logo.png" alt="Musicozy" class="brand-logo-img">
+    <div class="brand has-tooltip" data-tooltip="Musicozy">
+      <img src="logo.png" alt="Musicozy" class="brand-logo-img">
     </div>
 
-    <nav class="nav">
-      <a href="#" class="nav-item active"><span class="nav-icon">⌂</span>Home</a>
-      <a href="#" class="nav-item"><span class="nav-icon">⌕</span>Search</a>
-      <a href="#" class="nav-item"><span class="nav-icon">▤</span>Your Library</a>
-    </nav>
+    <div class="sidebar-box">
+      <nav class="nav">
+        <a href="#" class="nav-item active"><span class="nav-icon material-symbols-rounded">library_music</span>Your Library</a>
+      </nav>
 
-    <div class="sidebar-divider"></div>
-
-    <div class="playlists">
-      <p class="playlists-label">Playlists</p>
-      <a href="#" class="playlist-item">Late Night Drive</a>
-      <a href="#" class="playlist-item">Sunday Coffee</a>
-      <a href="#" class="playlist-item">Deep Focus</a>
-      <a href="#" class="playlist-item">Rainy Window</a>
+      <div class="playlists">
+        <p class="playlists-label">Playlists</p>
+        <a href="#" class="playlist-item">Late Night Drive</a>
+        <a href="#" class="playlist-item">Sunday Coffee</a>
+        <a href="#" class="playlist-item">Deep Focus</a>
+        <a href="#" class="playlist-item">Rainy Window</a>
+      </div>
     </div>
   </aside>
 
@@ -40,17 +38,27 @@
   <main class="main">
     <header class="main-header">
       <div class="header-left">
-        <button class="round-btn" aria-label="Home">⌂</button>
-        <button class="round-btn" aria-label="Search">⌕</button>
+        <button class="round-btn has-tooltip" data-tooltip="Home" data-tooltip-variant="dark" aria-label="Home"><span class="material-symbols-rounded">home</span></button>
+        <div class="search-bar">
+          <span class="material-symbols-rounded search-icon has-tooltip" data-tooltip="Search" data-tooltip-variant="dark">search</span>
+          <input type="text" class="search-input" placeholder="What do you want to play?" aria-label="Search">
+          <span class="search-divider">|</span>
+          <button class="browse-btn has-tooltip" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse">
+            <span class="material-symbols-rounded browse-icon">grid_view</span>
+          </button>
+        </div>
       </div>
       <div class="header-right">
-        <button class="premium-btn">Explore Premium</button>
-        <button class="icon-btn bell-btn" aria-label="Notifications">
-          <span class="bell-dot"></span>🔔
+        <button class="premium-btn has-tooltip" data-tooltip="Upgrade to Premium">Explore Premium</button>
+        <button class="install-btn">
+          <span class="material-symbols-rounded">download</span>
+          Install App
+        </button>
+        <button class="icon-btn bell-btn has-tooltip" data-tooltip="What's New" data-tooltip-variant="dark" aria-label="Notifications">
+          <span class="bell-dot"></span><span class="material-symbols-rounded">notifications</span>
         </button>
         <div class="header-user">
-          <div class="avatar">P</div>
-          <span>Prashik</span>
+          <div class="avatar has-tooltip" data-tooltip="Prashik" data-tooltip-variant="dark">P</div>
         </div>
       </div>
     </header>
@@ -67,9 +75,11 @@
     </section>
 
     <div class="action-row">
-      <button class="play-pill" id="hero-play" aria-label="Play playlist">▶</button>
-      <button class="round-btn ghost" aria-label="Like playlist">♡</button>
-      <button class="round-btn ghost" aria-label="More options">⋯</button>
+      <button class="play-pill" id="hero-play" aria-label="Play playlist">
+        <span class="material-symbols-rounded" id="hero-play-icon">play_arrow</span>
+      </button>
+      <button class="round-btn ghost" aria-label="Like playlist"><span class="material-symbols-rounded">favorite</span></button>
+      <button class="round-btn ghost" aria-label="More options"><span class="material-symbols-rounded">more_horiz</span></button>
     </div>
 
     <section class="track-table">
@@ -77,7 +87,7 @@
         <span class="col-index">#</span>
         <span class="col-title">Title</span>
         <span class="col-album">Album</span>
-        <span class="col-duration">⏱</span>
+        <span class="col-duration"><span class="material-symbols-rounded">schedule</span></span>
       </div>
       <div class="track-list" id="track-list">
         <!-- rows injected by script.js -->
@@ -96,16 +106,20 @@
       <p class="np-title" id="bar-title">—</p>
       <p class="np-artist" id="bar-artist">—</p>
     </div>
-    <button class="icon-btn like-btn" id="like-btn" aria-label="Like song">♡</button>
+    <button class="icon-btn like-btn" id="like-btn" aria-label="Like song">
+      <span class="material-symbols-rounded">favorite</span>
+    </button>
   </div>
 
   <div class="player-controls">
     <div class="control-buttons">
-      <button class="icon-btn" id="shuffle-btn" aria-label="Shuffle">⇄</button>
-      <button class="icon-btn" id="prev-btn" aria-label="Previous">⏮</button>
-      <button class="icon-btn play-btn" id="play-btn" aria-label="Play">▶</button>
-      <button class="icon-btn" id="next-btn" aria-label="Next">⏭</button>
-      <button class="icon-btn" id="repeat-btn" aria-label="Repeat">↻</button>
+      <button class="icon-btn" id="shuffle-btn" aria-label="Shuffle"><span class="material-symbols-rounded">shuffle</span></button>
+      <button class="icon-btn" id="prev-btn" aria-label="Previous"><span class="material-symbols-rounded">skip_previous</span></button>
+      <button class="icon-btn play-btn" id="play-btn" aria-label="Play">
+        <span class="material-symbols-rounded" id="play-icon">play_arrow</span>
+      </button>
+      <button class="icon-btn" id="next-btn" aria-label="Next"><span class="material-symbols-rounded">skip_next</span></button>
+      <button class="icon-btn" id="repeat-btn" aria-label="Repeat"><span class="material-symbols-rounded">repeat</span></button>
     </div>
     <div class="progress-row">
       <span class="time-current" id="time-current">0:00</span>
@@ -118,7 +132,7 @@
   </div>
 
   <div class="player-extra">
-    <span class="vol-icon">🔊</span>
+    <span class="vol-icon material-symbols-rounded">volume_up</span>
     <div class="volume-track" id="volume-track">
       <div class="volume-fill" id="volume-fill"></div>
       <div class="volume-handle" id="volume-handle"></div>
@@ -127,6 +141,7 @@
 </footer>
 
 <audio id="audio"></audio>
+<div id="cursor-tooltip" class="cursor-tooltip"></div>
 
 <script src="script.js"></script>
 </body>
