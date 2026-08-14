@@ -66,7 +66,9 @@ const barArtist = document.getElementById('bar-artist');
 const likeBtn = document.getElementById('like-btn');
 
 const playBtn = document.getElementById('play-btn');
+const playIcon = document.getElementById('play-icon');
 const heroPlayBtn = document.getElementById('hero-play');
+const heroPlayIcon = document.getElementById('hero-play-icon');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 const shuffleBtn = document.getElementById('shuffle-btn');
@@ -164,7 +166,6 @@ function loadTrack(index, autoplay){
   barTitle.textContent = t.title;
   barArtist.textContent = t.artist;
   likeBtn.classList.toggle('is-liked', state.liked.has(index));
-  likeBtn.textContent = state.liked.has(index) ? "♥" : "♡";
 
   updateActiveRow();
 
@@ -210,16 +211,16 @@ function playPrev(){
 // ============ Audio events ============
 audio.addEventListener('play', () => {
   state.isPlaying = true;
-  playBtn.textContent = "⏸";
-  heroPlayBtn.textContent = "⏸";
+  playIcon.textContent = "pause";
+  heroPlayIcon.textContent = "pause";
   playerBar.classList.add('is-playing');
   updateActiveRow();
 });
 
 audio.addEventListener('pause', () => {
   state.isPlaying = false;
-  playBtn.textContent = "▶";
-  heroPlayBtn.textContent = "▶";
+  playIcon.textContent = "play_arrow";
+  heroPlayIcon.textContent = "play_arrow";
   playerBar.classList.remove('is-playing');
   updateActiveRow();
 });
@@ -258,11 +259,9 @@ likeBtn.addEventListener('click', () => {
   if (state.liked.has(idx)){
     state.liked.delete(idx);
     likeBtn.classList.remove('is-liked');
-    likeBtn.textContent = "♡";
   } else {
     state.liked.add(idx);
     likeBtn.classList.add('is-liked');
-    likeBtn.textContent = "♥";
   }
 });
 
@@ -319,6 +318,45 @@ volumeTrack.addEventListener('mousedown', (e) => {
   };
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onUp);
+});
+
+// ============ Cursor-following tooltips ============
+const cursorTooltip = document.getElementById('cursor-tooltip');
+const TOOLTIP_DELAY = 500; // ms of no movement before it appears
+let tooltipTimer = null;
+
+document.addEventListener('pointermove', (e) => {
+  const target = e.target.closest('.has-tooltip');
+
+  if (target){
+    const isDark = target.dataset.tooltipVariant === 'dark';
+
+    if (isDark){
+      // anchored below the icon — position doesn't track the cursor
+      const rect = target.getBoundingClientRect();
+      cursorTooltip.style.left = (rect.left + rect.width / 2) + 'px';
+      cursorTooltip.style.top = (rect.bottom + 10) + 'px';
+    } else {
+      // follows the cursor
+      cursorTooltip.style.left = (e.clientX + 14) + 'px';
+      cursorTooltip.style.top = (e.clientY + 14) + 'px';
+    }
+
+    // any movement hides it immediately and restarts the delay
+    cursorTooltip.classList.remove('is-visible');
+    clearTimeout(tooltipTimer);
+
+    const label = target.dataset.tooltip;
+
+    tooltipTimer = setTimeout(() => {
+      cursorTooltip.textContent = label;
+      cursorTooltip.classList.toggle('is-dark', isDark);
+      cursorTooltip.classList.add('is-visible');
+    }, TOOLTIP_DELAY);
+  } else {
+    clearTimeout(tooltipTimer);
+    cursorTooltip.classList.remove('is-visible');
+  }
 });
 
 // ============ Init ============
