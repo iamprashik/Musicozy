@@ -86,6 +86,15 @@ const volumeHandle = document.getElementById('volume-handle');
 
 const playerBar = document.querySelector('.player-bar');
 
+const nowPlayingArt = document.getElementById('now-playing-art');
+const nowPlayingTitle = document.getElementById('now-playing-title');
+const nowPlayingArtist = document.getElementById('now-playing-artist');
+const artistCardName = document.getElementById('artist-card-name');
+const panelLikeBtn = document.getElementById('panel-like-btn');
+const upNextArt = document.getElementById('up-next-art');
+const upNextTitle = document.getElementById('up-next-title');
+const upNextArtist = document.getElementById('up-next-artist');
+
 // ============ Helpers ============
 function formatTime(seconds){
   if (!isFinite(seconds) || seconds < 0) return "0:00";
@@ -98,6 +107,36 @@ function setPercent(el, fillEl, handleEl, percent){
   const pct = Math.min(100, Math.max(0, percent));
   fillEl.style.width = pct + "%";
   handleEl.style.left = pct + "%";
+}
+
+function updateLikeButtons(){
+  const isLiked = state.liked.has(state.currentIndex);
+  likeBtn.classList.toggle('is-liked', isLiked);
+  panelLikeBtn.classList.toggle('is-liked', isLiked);
+}
+
+function updateNowPlayingPanel(){
+  const current = tracks[state.currentIndex];
+  const next = tracks[(state.currentIndex + 1) % tracks.length];
+
+  nowPlayingArt.src = current.cover;
+  nowPlayingTitle.textContent = current.title;
+  nowPlayingArtist.textContent = current.artist;
+  artistCardName.textContent = current.artist;
+
+  upNextArt.src = next.cover;
+  upNextTitle.textContent = next.title;
+  upNextArtist.textContent = next.artist;
+}
+
+function toggleCurrentLike(){
+  const idx = state.currentIndex;
+  if (state.liked.has(idx)){
+    state.liked.delete(idx);
+  } else {
+    state.liked.add(idx);
+  }
+  updateLikeButtons();
 }
 
 // ============ Rendering track list ============
@@ -165,7 +204,8 @@ function loadTrack(index, autoplay){
   barArt.src = t.cover;
   barTitle.textContent = t.title;
   barArtist.textContent = t.artist;
-  likeBtn.classList.toggle('is-liked', state.liked.has(index));
+  updateLikeButtons();
+  updateNowPlayingPanel();
 
   updateActiveRow();
 
@@ -254,16 +294,8 @@ repeatBtn.addEventListener('click', () => {
   repeatBtn.classList.toggle('is-active', state.isRepeating);
 });
 
-likeBtn.addEventListener('click', () => {
-  const idx = state.currentIndex;
-  if (state.liked.has(idx)){
-    state.liked.delete(idx);
-    likeBtn.classList.remove('is-liked');
-  } else {
-    state.liked.add(idx);
-    likeBtn.classList.add('is-liked');
-  }
-});
+likeBtn.addEventListener('click', toggleCurrentLike);
+panelLikeBtn.addEventListener('click', toggleCurrentLike);
 
 // ============ Drag-to-seek (progress bar) ============
 function seekFromEvent(clientX){
