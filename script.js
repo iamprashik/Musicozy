@@ -1,48 +1,57 @@
-// ============ Track data ============
-// Royalty-free demo tracks (SoundHelix) + placeholder art.
-// Swap `src` and `cover` with your own files to make this a real player.
 const tracks = [
   {
-    title: "Coastal Static",
-    artist: "Marlow Bay",
+    title: "Synth Wave by Alex",
+    artist: "Alex McCulloch",
     album: "Late Night Drive",
-    cover: "https://picsum.photos/seed/coastalstatic/300/300",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    cover: "https://picsum.photos/seed/synthwavealex/300/300",
+    src: "https://opengameart.org/sites/default/files/80s_song_mastered_0.mp3",
+    license: "CC0",
+    sourcePage: "https://opengameart.org/content/synth-wave-by-alex"
   },
   {
-    title: "Amber Streetlights",
-    artist: "Fenn & Vale",
+    title: "Nighttime Solitude",
+    artist: "celestialghost8",
     album: "Late Night Drive",
-    cover: "https://picsum.photos/seed/amberstreet/300/300",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+    cover: "https://picsum.photos/seed/nighttimesolitude/300/300",
+    src: "https://opengameart.org/sites/default/files/Nighttime%20Solitude%20%5BCC0%5D.mp3",
+    license: "CC0",
+    sourcePage: "https://opengameart.org/content/nighttime-solitude"
   },
   {
-    title: "Low Beam",
-    artist: "Marlow Bay",
+    title: "Synthwave 421k",
+    artist: "The Cynic Project",
     album: "Late Night Drive",
-    cover: "https://picsum.photos/seed/lowbeam/300/300",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+    cover: "https://picsum.photos/seed/synthwave421k/300/300",
+    src: "https://opengameart.org/sites/default/files/007_Synthwave_421k.mp3",
+    license: "CC0",
+    sourcePage: "https://opengameart.org/content/calm-relax-1-synthwave-421k"
   },
   {
-    title: "Empty Highway, Full Tank",
-    artist: "Ostro",
+    title: "Synthwave 4k",
+    artist: "The Cynic Project",
     album: "Late Night Drive",
-    cover: "https://picsum.photos/seed/emptyhighway/300/300",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+    cover: "https://picsum.photos/seed/synthwave4k/300/300",
+    src: "https://opengameart.org/sites/default/files/001_Synthwave_4k_0.mp3",
+    license: "CC0",
+    sourcePage: "https://opengameart.org/content/calm-ambient-1-synthwave-4k"
   },
   {
-    title: "Rearview",
-    artist: "Fenn & Vale",
+    title: "Synthwave 15k",
+    artist: "The Cynic Project",
     album: "Late Night Drive",
-    cover: "https://picsum.photos/seed/rearview/300/300",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"
+    cover: "https://picsum.photos/seed/synthwave15k/300/300",
+    src: "https://opengameart.org/sites/default/files/002_Synthwave_15k.mp3",
+    license: "CC0",
+    sourcePage: "https://opengameart.org/content/calm-ambient-2-synthwave-15k"
   },
   {
-    title: "Last Exit Before Dawn",
-    artist: "Ostro",
+    title: "Synth Wave",
+    artist: "Alex McCulloch",
     album: "Late Night Drive",
-    cover: "https://picsum.photos/seed/lastexit/300/300",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
+    cover: "https://picsum.photos/seed/synthwaveretro/300/300",
+    src: "https://opengameart.org/sites/default/files/Synth%20Wave_0.mp3",
+    license: "CC0",
+    sourcePage: "https://opengameart.org/content/synth-wave"
   }
 ];
 
@@ -50,8 +59,6 @@ const tracks = [
 const state = {
   currentIndex: 0,
   isPlaying: false,
-  isShuffled: false,
-  isRepeating: false,
   isSeeking: false,
   liked: new Set()
 };
@@ -71,8 +78,8 @@ const heroPlayBtn = document.getElementById('hero-play');
 const heroPlayIcon = document.getElementById('hero-play-icon');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
-const shuffleBtn = document.getElementById('shuffle-btn');
-const repeatBtn = document.getElementById('repeat-btn');
+const replay10Btn = document.getElementById('replay-10-btn');
+const forward10Btn = document.getElementById('forward-10-btn');
 
 const timeCurrent = document.getElementById('time-current');
 const timeDuration = document.getElementById('time-duration');
@@ -222,19 +229,8 @@ function togglePlay(){
   }
 }
 
-function playNext(fromEnded){
-  if (state.isRepeating && fromEnded){
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
-    return;
-  }
-  let next;
-  if (state.isShuffled){
-    do { next = Math.floor(Math.random() * tracks.length); }
-    while (next === state.currentIndex && tracks.length > 1);
-  } else {
-    next = (state.currentIndex + 1) % tracks.length;
-  }
+function playNext(){
+  const next = (state.currentIndex + 1) % tracks.length;
   loadTrack(next, true);
 }
 
@@ -246,6 +242,15 @@ function playPrev(){
   }
   const prev = (state.currentIndex - 1 + tracks.length) % tracks.length;
   loadTrack(prev, true);
+}
+
+function seekBy(seconds){
+  if (!Number.isFinite(audio.duration)) return;
+
+  audio.currentTime = Math.min(
+    audio.duration,
+    Math.max(0, audio.currentTime + seconds)
+  );
 }
 
 // ============ Audio events ============
@@ -276,23 +281,15 @@ audio.addEventListener('timeupdate', () => {
   setPercent(progressTrack, progressFill, progressHandle, pct);
 });
 
-audio.addEventListener('ended', () => playNext(true));
+audio.addEventListener('ended', playNext);
 
 // ============ Button wiring ============
 playBtn.addEventListener('click', togglePlay);
 heroPlayBtn.addEventListener('click', togglePlay);
-nextBtn.addEventListener('click', () => playNext(false));
+nextBtn.addEventListener('click', playNext);
 prevBtn.addEventListener('click', playPrev);
-
-shuffleBtn.addEventListener('click', () => {
-  state.isShuffled = !state.isShuffled;
-  shuffleBtn.classList.toggle('is-active', state.isShuffled);
-});
-
-repeatBtn.addEventListener('click', () => {
-  state.isRepeating = !state.isRepeating;
-  repeatBtn.classList.toggle('is-active', state.isRepeating);
-});
+replay10Btn.addEventListener('click', () => seekBy(-10));
+forward10Btn.addEventListener('click', () => seekBy(10));
 
 likeBtn.addEventListener('click', toggleCurrentLike);
 panelLikeBtn.addEventListener('click', toggleCurrentLike);
@@ -354,7 +351,7 @@ volumeTrack.addEventListener('mousedown', (e) => {
 
 // ============ Cursor-following tooltips ============
 const cursorTooltip = document.getElementById('cursor-tooltip');
-const TOOLTIP_DELAY = 500; // ms of no movement before it appears
+const TOOLTIP_DELAY = 150; // ms of no movement before it appears
 let tooltipTimer = null;
 
 document.addEventListener('pointermove', (e) => {
