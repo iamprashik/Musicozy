@@ -1,3 +1,4 @@
+<!-- MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE -->
 <!DOCTYPE html>
 <!-- MUSICOZY NAVBAR OVERLAP FIX — REVISION 7 -->
 <!-- MUSICOZY CC0 MUSIC UPDATE — REVISION 1 -->
@@ -29,10 +30,10 @@
 
       <div class="playlists">
         <p class="playlists-label">Playlists</p>
-        <a href="#" class="playlist-item">Late Night Drive</a>
-        <a href="#" class="playlist-item">Sunday Coffee</a>
-        <a href="#" class="playlist-item">Deep Focus</a>
-        <a href="#" class="playlist-item">Rainy Window</a>
+        <a href="#" class="playlist-item active" data-playlist-id="late-night-drive">Late Night Drive</a>
+        <a href="#" class="playlist-item" data-playlist-id="sunday-coffee">Sunday Coffee</a>
+        <a href="#" class="playlist-item" data-playlist-id="deep-focus">Deep Focus</a>
+        <a href="#" class="playlist-item" data-playlist-id="rainy-window">Rainy Window</a>
       </div>
     </div>
   </aside>
@@ -46,7 +47,10 @@
         <button class="round-btn has-tooltip" data-tooltip="Home" data-tooltip-variant="dark" aria-label="Home"><span class="material-symbols-rounded">home</span></button>
         <div class="search-bar">
           <span class="material-symbols-rounded search-icon has-tooltip" data-tooltip="Search" data-tooltip-variant="dark">search</span>
-          <input type="search" class="search-input" id="search-input" placeholder="What do you want to play?" aria-label="Search songs" autocomplete="off">
+          <input type="text" class="search-input" id="search-input" placeholder="What do you want to play?" aria-label="Search songs" autocomplete="off">
+          <button class="search-clear-btn" id="search-clear-btn" type="button" aria-label="Clear search" hidden>
+            <span class="material-symbols-rounded">close</span>
+          </button>
           <span class="search-divider">|</span>
           <button class="browse-btn has-tooltip" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse">
             <span class="material-symbols-rounded browse-icon">grid_view</span>
@@ -77,12 +81,12 @@
     <div class="main-content">
       <section class="hero">
         <div class="hero-art">
-          <img src="https://picsum.photos/seed/amberdrive/300/300" alt="">
+          <img id="hero-art" src="https://picsum.photos/seed/amberdrive/300/300" alt="Late Night Drive artwork">
         </div>
         <div class="hero-info">
           <span class="hero-eyebrow">Playlist</span>
-          <h1 class="hero-title">Late Night Drive</h1>
-          <p class="hero-meta">Prashik · 6 CC0 tracks · Dreamy synthwave and slow-burn electronic grooves for the road after everyone else is asleep.</p>
+          <h1 class="hero-title" id="hero-title">Late Night Drive</h1>
+          <p class="hero-meta" id="hero-meta">Prashik · 6 CC0 tracks · Dreamy synthwave and slow-burn electronic grooves for the road after everyone else is asleep.</p>
         </div>
       </section>
 
@@ -114,7 +118,7 @@
       <div class="now-playing-heading">
         <div>
           <p class="now-playing-kicker">Now Playing</p>
-          <h2>Late Night Drive</h2>
+          <h2 id="now-playing-playlist">Late Night Drive</h2>
         </div>
       </div>
 
