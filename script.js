@@ -1,3 +1,4 @@
+// MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE
 // MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1
 // ============ Track data ============
 // CC0 synthwave tracks from OpenGameArt + placeholder artwork.
@@ -59,9 +60,40 @@ const tracks = [
   }
 ];
 
+// ============ Playlist data ============
+// The playlists currently reuse the verified CC0 tracks in different orders.
+const playlists = {
+  "late-night-drive": {
+    name: "Late Night Drive",
+    cover: "https://picsum.photos/seed/amberdrive/300/300",
+    description: "Dreamy synthwave and slow-burn electronic grooves for the road after everyone else is asleep.",
+    trackIndices: [0, 1, 2, 3, 4, 5]
+  },
+  "sunday-coffee": {
+    name: "Sunday Coffee",
+    cover: "https://picsum.photos/seed/sundaycoffee/300/300",
+    description: "Warm, unhurried electronic tracks for a quiet start and a slow cup of coffee.",
+    trackIndices: [1, 3, 5, 0]
+  },
+  "deep-focus": {
+    name: "Deep Focus",
+    cover: "https://picsum.photos/seed/deepfocus/300/300",
+    description: "Steady ambient synths selected to keep distractions low while you work or study.",
+    trackIndices: [2, 3, 4, 1]
+  },
+  "rainy-window": {
+    name: "Rainy Window",
+    cover: "https://picsum.photos/seed/rainywindow/300/300",
+    description: "Soft, reflective electronic music for grey skies, rainfall and late afternoons indoors.",
+    trackIndices: [1, 4, 3, 5]
+  }
+};
+
 // ============ State ============
 const state = {
   currentIndex: 0,
+  activePlaylistId: "late-night-drive",
+  playingPlaylistId: "late-night-drive",
   isPlaying: false,
   isSeeking: false,
   liked: new Set()
@@ -71,6 +103,12 @@ const state = {
 const audio = document.getElementById('audio');
 const trackListEl = document.getElementById('track-list');
 const searchInput = document.getElementById('search-input') || document.querySelector('.search-input');
+const searchClearBtn = document.getElementById('search-clear-btn');
+const playlistItems = document.querySelectorAll('.playlist-item[data-playlist-id]');
+
+const heroArt = document.getElementById('hero-art');
+const heroTitle = document.getElementById('hero-title');
+const heroMeta = document.getElementById('hero-meta');
 
 const barArt = document.getElementById('bar-art');
 const barTitle = document.getElementById('bar-title');
@@ -101,6 +139,7 @@ const playerBar = document.querySelector('.player-bar');
 const nowPlayingArt = document.getElementById('now-playing-art');
 const nowPlayingTitle = document.getElementById('now-playing-title');
 const nowPlayingArtist = document.getElementById('now-playing-artist');
+const nowPlayingPlaylist = document.getElementById('now-playing-playlist');
 const artistCardName = document.getElementById('artist-card-name');
 const panelLikeBtn = document.getElementById('panel-like-btn');
 const upNextArt = document.getElementById('up-next-art');
@@ -121,6 +160,23 @@ function setPercent(el, fillEl, handleEl, percent){
   handleEl.style.left = pct + "%";
 }
 
+function getPlaylist(playlistId = state.activePlaylistId){
+  return playlists[playlistId];
+}
+
+function getNextTrackIndex(playlistId = state.playingPlaylistId){
+  const indices = getPlaylist(playlistId).trackIndices;
+  const currentPosition = indices.indexOf(state.currentIndex);
+  if (currentPosition === -1) return indices[0];
+  return indices[(currentPosition + 1) % indices.length];
+}
+
+function updateHeroPlayIcon(){
+  const selectedPlaylistIsPlaying =
+    state.isPlaying && state.activePlaylistId === state.playingPlaylistId;
+  heroPlayIcon.textContent = selectedPlaylistIsPlaying ? "pause" : "play_arrow";
+}
+
 function updateLikeButtons(){
   const isLiked = state.liked.has(state.currentIndex);
   likeBtn.classList.toggle('is-liked', isLiked);
@@ -129,11 +185,13 @@ function updateLikeButtons(){
 
 function updateNowPlayingPanel(){
   const current = tracks[state.currentIndex];
-  const next = tracks[(state.currentIndex + 1) % tracks.length];
+  const next = tracks[getNextTrackIndex()];
+  const playingPlaylist = getPlaylist(state.playingPlaylistId);
 
   nowPlayingArt.src = current.cover;
   nowPlayingTitle.textContent = current.title;
   nowPlayingArtist.textContent = current.artist;
+  nowPlayingPlaylist.textContent = playingPlaylist.name;
   artistCardName.textContent = current.artist;
 
   upNextArt.src = next.cover;
@@ -151,13 +209,40 @@ function toggleCurrentLike(){
   updateLikeButtons();
 }
 
+function updatePlaylistView(){
+  const playlist = getPlaylist();
+  const trackCount = playlist.trackIndices.length;
+
+  heroArt.src = playlist.cover;
+  heroArt.alt = `${playlist.name} artwork`;
+  heroTitle.textContent = playlist.name;
+  heroMeta.textContent = `Prashik · ${trackCount} CC0 tracks · ${playlist.description}`;
+
+  playlistItems.forEach(item => {
+    item.classList.toggle('active', item.dataset.playlistId === state.activePlaylistId);
+  });
+
+  if (searchInput){
+    searchInput.value = "";
+    searchClearBtn.hidden = true;
+  }
+
+  renderTrackList();
+  updateHeroPlayIcon();
+}
+
 // ============ Rendering and filtering the track list ============
 function renderTrackList(query = ""){
   const normalizedQuery = query.trim().toLowerCase();
-  const matchingTracks = tracks
-    .map((track, index) => ({ track, index }))
+  const playlist = getPlaylist();
+  const matchingTracks = playlist.trackIndices
+    .map((trackIndex, position) => ({
+      track: tracks[trackIndex],
+      trackIndex,
+      position
+    }))
     .filter(({ track }) => {
-      const searchableText = `${track.title} ${track.artist} ${track.album}`.toLowerCase();
+      const searchableText = `${track.title} ${track.artist} ${playlist.name}`.toLowerCase();
       return searchableText.includes(normalizedQuery);
     });
 
@@ -168,10 +253,10 @@ function renderTrackList(query = ""){
     return;
   }
 
-  trackListEl.innerHTML = matchingTracks.map(({ track: t, index: i }) => `
-    <div class="track-row" data-index="${i}">
+  trackListEl.innerHTML = matchingTracks.map(({ track: t, trackIndex, position }) => `
+    <div class="track-row" data-index="${trackIndex}">
       <span class="col-index">
-        <span class="idx-num">${i + 1}</span>
+        <span class="idx-num">${position + 1}</span>
         <span class="eq"><span></span><span></span><span></span><span></span></span>
       </span>
       <span class="col-title">
@@ -181,17 +266,19 @@ function renderTrackList(query = ""){
           <span class="t-artist">${t.artist}</span>
         </span>
       </span>
-      <span class="col-album">${t.album}</span>
-      <span class="col-duration" data-duration-for="${i}">${Number.isFinite(t.duration) ? formatTime(t.duration) : "--:--"}</span>
+      <span class="col-album">${playlist.name}</span>
+      <span class="col-duration" data-duration-for="${trackIndex}">${Number.isFinite(t.duration) ? formatTime(t.duration) : "--:--"}</span>
     </div>
   `).join("");
 
   trackListEl.querySelectorAll('.track-row').forEach(row => {
     row.addEventListener('click', () => {
       const idx = Number(row.dataset.index);
-      if (idx === state.currentIndex){
+      const selectedPlaylistIsPlaying = state.activePlaylistId === state.playingPlaylistId;
+      if (idx === state.currentIndex && selectedPlaylistIsPlaying){
         togglePlay();
       } else {
+        state.playingPlaylistId = state.activePlaylistId;
         loadTrack(idx, true);
       }
     });
@@ -203,8 +290,10 @@ function renderTrackList(query = ""){
 function updateActiveRow(){
   trackListEl.querySelectorAll('.track-row').forEach(row => {
     const idx = Number(row.dataset.index);
-    row.classList.toggle('is-active', idx === state.currentIndex);
-    row.classList.toggle('is-paused', idx === state.currentIndex && !state.isPlaying);
+    const isCurrentTrack =
+      state.activePlaylistId === state.playingPlaylistId && idx === state.currentIndex;
+    row.classList.toggle('is-active', isCurrentTrack);
+    row.classList.toggle('is-paused', isCurrentTrack && !state.isPlaying);
   });
 }
 
@@ -249,9 +338,21 @@ function togglePlay(){
   }
 }
 
+function playActivePlaylist(){
+  const playlist = getPlaylist();
+  const selectedPlaylistIsLoaded = state.activePlaylistId === state.playingPlaylistId;
+
+  if (selectedPlaylistIsLoaded && playlist.trackIndices.includes(state.currentIndex)){
+    togglePlay();
+    return;
+  }
+
+  state.playingPlaylistId = state.activePlaylistId;
+  loadTrack(playlist.trackIndices[0], true);
+}
+
 function playNext(){
-  const next = (state.currentIndex + 1) % tracks.length;
-  loadTrack(next, true);
+  loadTrack(getNextTrackIndex(), true);
 }
 
 function playPrev(){
@@ -260,8 +361,10 @@ function playPrev(){
     audio.currentTime = 0;
     return;
   }
-  const prev = (state.currentIndex - 1 + tracks.length) % tracks.length;
-  loadTrack(prev, true);
+  const indices = getPlaylist(state.playingPlaylistId).trackIndices;
+  const currentPosition = indices.indexOf(state.currentIndex);
+  const previousPosition = currentPosition <= 0 ? indices.length - 1 : currentPosition - 1;
+  loadTrack(indices[previousPosition], true);
 }
 
 function seekBy(seconds){
@@ -277,7 +380,7 @@ function seekBy(seconds){
 audio.addEventListener('play', () => {
   state.isPlaying = true;
   playIcon.textContent = "pause";
-  heroPlayIcon.textContent = "pause";
+  updateHeroPlayIcon();
   playerBar.classList.add('is-playing');
   updateActiveRow();
 });
@@ -285,7 +388,7 @@ audio.addEventListener('play', () => {
 audio.addEventListener('pause', () => {
   state.isPlaying = false;
   playIcon.textContent = "play_arrow";
-  heroPlayIcon.textContent = "play_arrow";
+  updateHeroPlayIcon();
   playerBar.classList.remove('is-playing');
   updateActiveRow();
 });
@@ -305,12 +408,34 @@ audio.addEventListener('ended', playNext);
 
 // ============ Button wiring ============
 playBtn.addEventListener('click', togglePlay);
-heroPlayBtn.addEventListener('click', togglePlay);
+heroPlayBtn.addEventListener('click', playActivePlaylist);
 nextBtn.addEventListener('click', playNext);
 prevBtn.addEventListener('click', playPrev);
 replay10Btn?.addEventListener('click', () => seekBy(-10));
 forward10Btn?.addEventListener('click', () => seekBy(10));
-searchInput?.addEventListener('input', () => renderTrackList(searchInput.value));
+
+playlistItems.forEach(item => {
+  item.addEventListener('click', event => {
+    event.preventDefault();
+    const playlistId = item.dataset.playlistId;
+    if (!playlists[playlistId] || playlistId === state.activePlaylistId) return;
+
+    state.activePlaylistId = playlistId;
+    updatePlaylistView();
+  });
+});
+searchInput?.addEventListener('input', () => {
+  const hasText = searchInput.value.length > 0;
+  searchClearBtn?.toggleAttribute('hidden', !hasText);
+  renderTrackList(searchInput.value);
+});
+
+searchClearBtn?.addEventListener('click', () => {
+  searchInput.value = "";
+  searchClearBtn.hidden = true;
+  renderTrackList();
+  searchInput.focus();
+});
 
 likeBtn.addEventListener('click', toggleCurrentLike);
 panelLikeBtn.addEventListener('click', toggleCurrentLike);
@@ -410,7 +535,7 @@ document.addEventListener('pointermove', (e) => {
 });
 
 // ============ Init ============
-renderTrackList();
+updatePlaylistView();
 preloadDurations();
 loadTrack(0, false);
 audio.volume = 0.75;
