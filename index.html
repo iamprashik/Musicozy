@@ -46,7 +46,7 @@
         <button class="round-btn has-tooltip" data-tooltip="Home" data-tooltip-variant="dark" aria-label="Home"><span class="material-symbols-rounded">home</span></button>
         <div class="search-bar">
           <span class="material-symbols-rounded search-icon has-tooltip" data-tooltip="Search" data-tooltip-variant="dark">search</span>
-          <input type="text" class="search-input" placeholder="What do you want to play?" aria-label="Search">
+          <input type="search" class="search-input" id="search-input" placeholder="What do you want to play?" aria-label="Search songs" autocomplete="off">
           <span class="search-divider">|</span>
           <button class="browse-btn has-tooltip" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse">
             <span class="material-symbols-rounded browse-icon">grid_view</span>
@@ -101,7 +101,7 @@
           <span class="col-album">Album</span>
           <span class="col-duration"><span class="material-symbols-rounded">schedule</span></span>
         </div>
-        <div class="track-list" id="track-list">
+        <div class="track-list" id="track-list" aria-live="polite">
           <!-- rows injected by script.js -->
         </div>
       </section>
