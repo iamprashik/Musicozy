@@ -1,3 +1,4 @@
+// MUSICOZY LIKES STEP 1 — HEART BUTTONS
 // MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE
 // MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1
 // ============ Track data ============
@@ -181,6 +182,17 @@ function updateLikeButtons(){
   const isLiked = state.liked.has(state.currentIndex);
   likeBtn.classList.toggle('is-liked', isLiked);
   panelLikeBtn.classList.toggle('is-liked', isLiked);
+
+  trackListEl.querySelectorAll('.track-like-btn').forEach(button => {
+    const trackIndex = Number(button.dataset.likeIndex);
+    const trackIsLiked = state.liked.has(trackIndex);
+    button.classList.toggle('is-liked', trackIsLiked);
+    button.setAttribute('aria-pressed', String(trackIsLiked));
+    button.setAttribute(
+      'aria-label',
+      `${trackIsLiked ? 'Remove' : 'Add'} ${tracks[trackIndex].title} ${trackIsLiked ? 'from' : 'to'} Liked Songs`
+    );
+  });
 }
 
 function updateNowPlayingPanel(){
@@ -199,14 +211,17 @@ function updateNowPlayingPanel(){
   upNextArtist.textContent = next.artist;
 }
 
-function toggleCurrentLike(){
-  const idx = state.currentIndex;
-  if (state.liked.has(idx)){
-    state.liked.delete(idx);
+function toggleTrackLike(trackIndex){
+  if (state.liked.has(trackIndex)){
+    state.liked.delete(trackIndex);
   } else {
-    state.liked.add(idx);
+    state.liked.add(trackIndex);
   }
   updateLikeButtons();
+}
+
+function toggleCurrentLike(){
+  toggleTrackLike(state.currentIndex);
 }
 
 function updatePlaylistView(){
@@ -267,9 +282,28 @@ function renderTrackList(query = ""){
         </span>
       </span>
       <span class="col-album">${playlist.name}</span>
+      <span class="col-like">
+        <button
+          class="track-like-btn${state.liked.has(trackIndex) ? ' is-liked' : ''}"
+          data-like-index="${trackIndex}"
+          type="button"
+          aria-label="${state.liked.has(trackIndex) ? 'Remove' : 'Add'} ${t.title} ${state.liked.has(trackIndex) ? 'from' : 'to'} Liked Songs"
+          aria-pressed="${state.liked.has(trackIndex)}"
+          title="Like song"
+        >
+          <span class="material-symbols-rounded">favorite</span>
+        </button>
+      </span>
       <span class="col-duration" data-duration-for="${trackIndex}">${Number.isFinite(t.duration) ? formatTime(t.duration) : "--:--"}</span>
     </div>
   `).join("");
+
+  trackListEl.querySelectorAll('.track-like-btn').forEach(button => {
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      toggleTrackLike(Number(button.dataset.likeIndex));
+    });
+  });
 
   trackListEl.querySelectorAll('.track-row').forEach(row => {
     row.addEventListener('click', () => {
@@ -285,6 +319,7 @@ function renderTrackList(query = ""){
   });
 
   updateActiveRow();
+  updateLikeButtons();
 }
 
 function updateActiveRow(){
