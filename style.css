@@ -1,3 +1,4 @@
+/* MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE */
 /* MUSICOZY NAVBAR OVERLAP FIX — REVISION 7 */
 /* MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1 */
 /* ============ Tokens ============ */
@@ -192,6 +193,12 @@ button:focus-visible, a:focus-visible{
   transition: color .15s ease, background .15s ease;
 }
 .playlist-item:hover{ color: var(--text); background: var(--surface); }
+.playlist-item.active{
+  color: var(--text);
+  background: var(--surface-raised);
+  font-weight: 600;
+  box-shadow: inset 3px 0 var(--amber);
+}
 
 /* ============ Main ============ */
 .main{
@@ -469,6 +476,23 @@ button:focus-visible, a:focus-visible{
   font-weight: 500;
 }
 .search-input::placeholder{ color: var(--text-faint); }
+.search-clear-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  color: var(--text-muted);
+  font-size: 22px;
+  padding: 2px;
+  border-radius: 50%;
+  transition: color .15s ease, background .15s ease, transform .1s ease;
+}
+.search-clear-btn:hover{
+  color: var(--text);
+  background: rgba(255,255,255,.08);
+}
+.search-clear-btn:active{ transform: scale(.9); }
+.search-clear-btn[hidden]{ display:none; }
 
 .now-playing-nav-zone{
   grid-column: 2;
