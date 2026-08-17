@@ -1,3 +1,4 @@
+// MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH
 // MUSICOZY LIKES STEP 1 — HEART BUTTONS
 // MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE
 // MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1
@@ -90,6 +91,41 @@ const playlists = {
   }
 };
 
+// ============ Saved liked songs ============
+const LIKED_SONGS_STORAGE_KEY = "musicozy-liked-songs-v1";
+
+function readSavedLikedSongs(){
+  try {
+    const savedTrackIndices = JSON.parse(
+      localStorage.getItem(LIKED_SONGS_STORAGE_KEY) || "[]"
+    );
+
+    if (!Array.isArray(savedTrackIndices)) return new Set();
+
+    return new Set(
+      savedTrackIndices.filter(trackIndex =>
+        Number.isInteger(trackIndex) &&
+        trackIndex >= 0 &&
+        trackIndex < tracks.length
+      )
+    );
+  } catch (error) {
+    console.warn("Musicozy could not read liked songs:", error);
+    return new Set();
+  }
+}
+
+function saveLikedSongs(){
+  try {
+    localStorage.setItem(
+      LIKED_SONGS_STORAGE_KEY,
+      JSON.stringify([...state.liked])
+    );
+  } catch (error) {
+    console.warn("Musicozy could not save liked songs:", error);
+  }
+}
+
 // ============ State ============
 const state = {
   currentIndex: 0,
@@ -97,7 +133,7 @@ const state = {
   playingPlaylistId: "late-night-drive",
   isPlaying: false,
   isSeeking: false,
-  liked: new Set()
+  liked: readSavedLikedSongs()
 };
 
 // ============ DOM refs ============
@@ -217,6 +253,7 @@ function toggleTrackLike(trackIndex){
   } else {
     state.liked.add(trackIndex);
   }
+  saveLikedSongs();
   updateLikeButtons();
 }
 
@@ -474,6 +511,12 @@ searchClearBtn?.addEventListener('click', () => {
 
 likeBtn.addEventListener('click', toggleCurrentLike);
 panelLikeBtn.addEventListener('click', toggleCurrentLike);
+
+window.addEventListener('storage', event => {
+  if (event.key !== LIKED_SONGS_STORAGE_KEY) return;
+  state.liked = readSavedLikedSongs();
+  updateLikeButtons();
+});
 
 // ============ Drag-to-seek (progress bar) ============
 function seekFromEvent(clientX){
