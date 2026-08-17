@@ -1,3 +1,10 @@
+/* MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST */
+/* MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH */
+/* MUSICOZY LIKES STEP 1 — HEART BUTTONS */
+/* MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE */
+/* MUSICOZY NAVBAR OVERLAP FIX — REVISION 7 */
+/* MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1 */
+/* ============ Tokens ============ */
 :root{
   --bg: #000000;
   --panel-bg: #121212;
@@ -195,6 +202,22 @@ button:focus-visible, a:focus-visible{
   background: var(--surface-raised);
   font-weight: 600;
   box-shadow: inset 3px 0 var(--amber);
+}
+.playlist-item.liked-songs-item{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color: var(--text);
+}
+.liked-songs-item .material-symbols-rounded{
+  color: var(--amber);
+  font-size:18px;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+.playlist-divider{
+  height:1px;
+  margin:8px 10px;
+  background: var(--border);
 }
 
 /* ============ Main ============ */
@@ -662,6 +685,15 @@ button:focus-visible, a:focus-visible{
 }
 .play-pill:hover{ background: var(--amber-bright); transform: scale(1.05); }
 .play-pill:active{ transform: scale(0.96); }
+.play-pill:disabled{
+  opacity:.38;
+  cursor:not-allowed;
+  transform:none;
+}
+.play-pill:disabled:hover{
+  background:var(--amber);
+  transform:none;
+}
 
 /* ---- Track table ---- */
 .track-table{ padding-bottom: 8px; }

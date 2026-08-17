@@ -1,3 +1,4 @@
+// MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST
 // MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH
 // MUSICOZY LIKES STEP 1 — HEART BUTTONS
 // MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE
@@ -65,6 +66,12 @@ const tracks = [
 // ============ Playlist data ============
 // The playlists currently reuse the verified CC0 tracks in different orders.
 const playlists = {
+  "liked-songs": {
+    name: "Liked Songs",
+    cover: "https://picsum.photos/seed/musicozylikedsongs/300/300",
+    description: "Every track you have saved in one place.",
+    trackIndices: []
+  },
   "late-night-drive": {
     name: "Late Night Drive",
     cover: "https://picsum.photos/seed/amberdrive/300/300",
@@ -198,20 +205,38 @@ function setPercent(el, fillEl, handleEl, percent){
 }
 
 function getPlaylist(playlistId = state.activePlaylistId){
-  return playlists[playlistId];
+  const playlist = playlists[playlistId];
+
+  if (playlistId === "liked-songs"){
+    return {
+      ...playlist,
+      trackIndices: [...state.liked]
+    };
+  }
+
+  return playlist;
 }
 
 function getNextTrackIndex(playlistId = state.playingPlaylistId){
   const indices = getPlaylist(playlistId).trackIndices;
+  if (indices.length === 0) return state.currentIndex;
   const currentPosition = indices.indexOf(state.currentIndex);
   if (currentPosition === -1) return indices[0];
   return indices[(currentPosition + 1) % indices.length];
 }
 
 function updateHeroPlayIcon(){
+  const selectedPlaylistHasTracks = getPlaylist().trackIndices.length > 0;
   const selectedPlaylistIsPlaying =
     state.isPlaying && state.activePlaylistId === state.playingPlaylistId;
-  heroPlayIcon.textContent = selectedPlaylistIsPlaying ? "pause" : "play_arrow";
+
+  heroPlayBtn.disabled = !selectedPlaylistHasTracks;
+  heroPlayBtn.setAttribute(
+    'aria-label',
+    selectedPlaylistHasTracks ? 'Play playlist' : 'Playlist is empty'
+  );
+  heroPlayIcon.textContent =
+    selectedPlaylistHasTracks && selectedPlaylistIsPlaying ? "pause" : "play_arrow";
 }
 
 function updateLikeButtons(){
@@ -255,20 +280,35 @@ function toggleTrackLike(trackIndex){
   }
   saveLikedSongs();
   updateLikeButtons();
+
+  if (state.activePlaylistId === "liked-songs"){
+    updateHeroDetails();
+    renderTrackList(searchInput?.value || "");
+    updateHeroPlayIcon();
+  }
+
+  if (state.playingPlaylistId === "liked-songs"){
+    updateNowPlayingPanel();
+  }
 }
 
 function toggleCurrentLike(){
   toggleTrackLike(state.currentIndex);
 }
 
-function updatePlaylistView(){
+function updateHeroDetails(){
   const playlist = getPlaylist();
   const trackCount = playlist.trackIndices.length;
+  const trackLabel = trackCount === 1 ? "track" : "tracks";
 
   heroArt.src = playlist.cover;
   heroArt.alt = `${playlist.name} artwork`;
   heroTitle.textContent = playlist.name;
-  heroMeta.textContent = `Prashik · ${trackCount} CC0 tracks · ${playlist.description}`;
+  heroMeta.textContent = `Prashik · ${trackCount} CC0 ${trackLabel} · ${playlist.description}`;
+}
+
+function updatePlaylistView(){
+  updateHeroDetails();
 
   playlistItems.forEach(item => {
     item.classList.toggle('active', item.dataset.playlistId === state.activePlaylistId);
@@ -299,8 +339,13 @@ function renderTrackList(query = ""){
     });
 
   if (matchingTracks.length === 0){
+    const emptyMessage =
+      state.activePlaylistId === "liked-songs" && !normalizedQuery
+        ? "Your Liked Songs playlist is empty. Tap a heart beside any song to add it."
+        : "No songs found";
+
     trackListEl.innerHTML = `
-      <p class="search-empty-state" role="status">No songs found</p>
+      <p class="search-empty-state" role="status">${emptyMessage}</p>
     `;
     return;
   }
@@ -412,6 +457,7 @@ function togglePlay(){
 
 function playActivePlaylist(){
   const playlist = getPlaylist();
+  if (playlist.trackIndices.length === 0) return;
   const selectedPlaylistIsLoaded = state.activePlaylistId === state.playingPlaylistId;
 
   if (selectedPlaylistIsLoaded && playlist.trackIndices.includes(state.currentIndex)){
@@ -516,6 +562,16 @@ window.addEventListener('storage', event => {
   if (event.key !== LIKED_SONGS_STORAGE_KEY) return;
   state.liked = readSavedLikedSongs();
   updateLikeButtons();
+
+  if (state.activePlaylistId === "liked-songs"){
+    updateHeroDetails();
+    renderTrackList(searchInput?.value || "");
+    updateHeroPlayIcon();
+  }
+
+  if (state.playingPlaylistId === "liked-songs"){
+    updateNowPlayingPanel();
+  }
 });
 
 // ============ Drag-to-seek (progress bar) ============
