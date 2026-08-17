@@ -1,3 +1,7 @@
+// MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1
+// ============ Track data ============
+// CC0 synthwave tracks from OpenGameArt + placeholder artwork.
+// Source pages and artist credits are included with every track below.
 const tracks = [
   {
     title: "Synth Wave by Alex",
@@ -66,6 +70,7 @@ const state = {
 // ============ DOM refs ============
 const audio = document.getElementById('audio');
 const trackListEl = document.getElementById('track-list');
+const searchInput = document.getElementById('search-input') || document.querySelector('.search-input');
 
 const barArt = document.getElementById('bar-art');
 const barTitle = document.getElementById('bar-title');
@@ -146,9 +151,24 @@ function toggleCurrentLike(){
   updateLikeButtons();
 }
 
-// ============ Rendering track list ============
-function renderTrackList(){
-  trackListEl.innerHTML = tracks.map((t, i) => `
+// ============ Rendering and filtering the track list ============
+function renderTrackList(query = ""){
+  const normalizedQuery = query.trim().toLowerCase();
+  const matchingTracks = tracks
+    .map((track, index) => ({ track, index }))
+    .filter(({ track }) => {
+      const searchableText = `${track.title} ${track.artist} ${track.album}`.toLowerCase();
+      return searchableText.includes(normalizedQuery);
+    });
+
+  if (matchingTracks.length === 0){
+    trackListEl.innerHTML = `
+      <p class="search-empty-state" role="status">No songs found</p>
+    `;
+    return;
+  }
+
+  trackListEl.innerHTML = matchingTracks.map(({ track: t, index: i }) => `
     <div class="track-row" data-index="${i}">
       <span class="col-index">
         <span class="idx-num">${i + 1}</span>
@@ -162,7 +182,7 @@ function renderTrackList(){
         </span>
       </span>
       <span class="col-album">${t.album}</span>
-      <span class="col-duration" data-duration-for="${i}">--:--</span>
+      <span class="col-duration" data-duration-for="${i}">${Number.isFinite(t.duration) ? formatTime(t.duration) : "--:--"}</span>
     </div>
   `).join("");
 
@@ -178,7 +198,6 @@ function renderTrackList(){
   });
 
   updateActiveRow();
-  preloadDurations();
 }
 
 function updateActiveRow(){
@@ -196,8 +215,9 @@ function preloadDurations(){
     probe.preload = "metadata";
     probe.src = t.src;
     probe.addEventListener('loadedmetadata', () => {
+      t.duration = probe.duration;
       const cell = trackListEl.querySelector(`[data-duration-for="${i}"]`);
-      if (cell) cell.textContent = formatTime(probe.duration);
+      if (cell) cell.textContent = formatTime(t.duration);
     });
   });
 }
@@ -288,8 +308,9 @@ playBtn.addEventListener('click', togglePlay);
 heroPlayBtn.addEventListener('click', togglePlay);
 nextBtn.addEventListener('click', playNext);
 prevBtn.addEventListener('click', playPrev);
-replay10Btn.addEventListener('click', () => seekBy(-10));
-forward10Btn.addEventListener('click', () => seekBy(10));
+replay10Btn?.addEventListener('click', () => seekBy(-10));
+forward10Btn?.addEventListener('click', () => seekBy(10));
+searchInput?.addEventListener('input', () => renderTrackList(searchInput.value));
 
 likeBtn.addEventListener('click', toggleCurrentLike);
 panelLikeBtn.addEventListener('click', toggleCurrentLike);
@@ -390,6 +411,7 @@ document.addEventListener('pointermove', (e) => {
 
 // ============ Init ============
 renderTrackList();
+preloadDurations();
 loadTrack(0, false);
 audio.volume = 0.75;
 setPercent(volumeTrack, volumeFill, volumeHandle, 75);
