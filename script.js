@@ -1,3 +1,5 @@
+// MUSICOZY STEP 5 — RECENTLY PLAYED
+// MUSICOZY STEP 4 — FUNCTIONAL QUEUE
 // MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST
 // MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH
 // MUSICOZY LIKES STEP 1 — HEART BUTTONS
@@ -72,6 +74,12 @@ const playlists = {
     description: "Every track you have saved in one place.",
     trackIndices: []
   },
+  "recently-played": {
+    name: "Recently Played",
+    cover: "https://picsum.photos/seed/musicozyrecentlyplayed/300/300",
+    description: "Your listening history, with the newest songs shown first.",
+    trackIndices: []
+  },
   "late-night-drive": {
     name: "Late Night Drive",
     cover: "https://picsum.photos/seed/amberdrive/300/300",
@@ -133,6 +141,42 @@ function saveLikedSongs(){
   }
 }
 
+// ============ Saved listening history ============
+const RECENTLY_PLAYED_STORAGE_KEY = "musicozy-recently-played-v1";
+const RECENTLY_PLAYED_LIMIT = 20;
+
+function readRecentlyPlayed(){
+  try {
+    const savedTrackIndices = JSON.parse(
+      localStorage.getItem(RECENTLY_PLAYED_STORAGE_KEY) || "[]"
+    );
+
+    if (!Array.isArray(savedTrackIndices)) return [];
+
+    const validTrackIndices = savedTrackIndices.filter(trackIndex =>
+      Number.isInteger(trackIndex) &&
+      trackIndex >= 0 &&
+      trackIndex < tracks.length
+    );
+
+    return [...new Set(validTrackIndices)].slice(0, RECENTLY_PLAYED_LIMIT);
+  } catch (error) {
+    console.warn("Musicozy could not read recently played songs:", error);
+    return [];
+  }
+}
+
+function saveRecentlyPlayed(){
+  try {
+    localStorage.setItem(
+      RECENTLY_PLAYED_STORAGE_KEY,
+      JSON.stringify(state.recentlyPlayed)
+    );
+  } catch (error) {
+    console.warn("Musicozy could not save recently played songs:", error);
+  }
+}
+
 // ============ State ============
 const state = {
   currentIndex: 0,
@@ -140,7 +184,8 @@ const state = {
   playingPlaylistId: "late-night-drive",
   isPlaying: false,
   isSeeking: false,
-  liked: readSavedLikedSongs()
+  liked: readSavedLikedSongs(),
+  recentlyPlayed: readRecentlyPlayed()
 };
 
 // ============ DOM refs ============
@@ -163,6 +208,7 @@ const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
 const heroPlayBtn = document.getElementById('hero-play');
 const heroPlayIcon = document.getElementById('hero-play-icon');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 const replay10Btn = document.getElementById('replay-10-btn');
@@ -186,9 +232,7 @@ const nowPlayingArtist = document.getElementById('now-playing-artist');
 const nowPlayingPlaylist = document.getElementById('now-playing-playlist');
 const artistCardName = document.getElementById('artist-card-name');
 const panelLikeBtn = document.getElementById('panel-like-btn');
-const upNextArt = document.getElementById('up-next-art');
-const upNextTitle = document.getElementById('up-next-title');
-const upNextArtist = document.getElementById('up-next-artist');
+const queueList = document.getElementById('queue-list');
 
 // ============ Helpers ============
 function formatTime(seconds){
@@ -214,6 +258,13 @@ function getPlaylist(playlistId = state.activePlaylistId){
     };
   }
 
+  if (playlistId === "recently-played"){
+    return {
+      ...playlist,
+      trackIndices: [...state.recentlyPlayed]
+    };
+  }
+
   return playlist;
 }
 
@@ -223,6 +274,22 @@ function getNextTrackIndex(playlistId = state.playingPlaylistId){
   const currentPosition = indices.indexOf(state.currentIndex);
   if (currentPosition === -1) return indices[0];
   return indices[(currentPosition + 1) % indices.length];
+}
+
+function getUpcomingTrackIndices(playlistId = state.playingPlaylistId, limit = 3){
+  const indices = getPlaylist(playlistId).trackIndices;
+  if (indices.length <= 1) return [];
+
+  const currentPosition = indices.indexOf(state.currentIndex);
+  const numberOfUpcomingTracks = Math.min(limit, indices.length - 1);
+
+  if (currentPosition === -1){
+    return indices.slice(0, Math.min(limit, indices.length));
+  }
+
+  return Array.from({ length: numberOfUpcomingTracks }, (_, offset) =>
+    indices[(currentPosition + offset + 1) % indices.length]
+  );
 }
 
 function updateHeroPlayIcon(){
@@ -258,8 +325,8 @@ function updateLikeButtons(){
 
 function updateNowPlayingPanel(){
   const current = tracks[state.currentIndex];
-  const next = tracks[getNextTrackIndex()];
   const playingPlaylist = getPlaylist(state.playingPlaylistId);
+  const upcomingTrackIndices = getUpcomingTrackIndices();
 
   nowPlayingArt.src = current.cover;
   nowPlayingTitle.textContent = current.title;
@@ -267,9 +334,39 @@ function updateNowPlayingPanel(){
   nowPlayingPlaylist.textContent = playingPlaylist.name;
   artistCardName.textContent = current.artist;
 
-  upNextArt.src = next.cover;
-  upNextTitle.textContent = next.title;
-  upNextArtist.textContent = next.artist;
+  if (upcomingTrackIndices.length === 0){
+    queueList.innerHTML = `
+      <p class="queue-empty-state">No more songs are waiting in this playlist.</p>
+    `;
+    return;
+  }
+
+  queueList.innerHTML = upcomingTrackIndices.map((trackIndex, queuePosition) => {
+    const track = tracks[trackIndex];
+
+    return `
+      <button
+        class="up-next-track"
+        type="button"
+        data-queue-index="${trackIndex}"
+        aria-label="Play ${track.title} next"
+      >
+        <span class="queue-track-number">${queuePosition + 1}</span>
+        <img src="${track.cover}" alt="">
+        <span class="queue-track-copy">
+          <span class="queue-track-title">${track.title}</span>
+          <span class="queue-track-artist">${track.artist}</span>
+        </span>
+        <span class="material-symbols-rounded queue-play-icon">play_arrow</span>
+      </button>
+    `;
+  }).join("");
+
+  queueList.querySelectorAll('.up-next-track').forEach(queueTrack => {
+    queueTrack.addEventListener('click', () => {
+      loadTrack(Number(queueTrack.dataset.queueIndex), true);
+    });
+  });
 }
 
 function toggleTrackLike(trackIndex){
@@ -294,6 +391,53 @@ function toggleTrackLike(trackIndex){
 
 function toggleCurrentLike(){
   toggleTrackLike(state.currentIndex);
+}
+
+function updatePlaylistActions(){
+  const isRecentlyPlayed = state.activePlaylistId === "recently-played";
+  clearHistoryBtn.hidden = !isRecentlyPlayed || state.recentlyPlayed.length === 0;
+}
+
+function addRecentlyPlayed(trackIndex){
+  if (state.recentlyPlayed[0] === trackIndex) return;
+
+  state.recentlyPlayed = [
+    trackIndex,
+    ...state.recentlyPlayed.filter(savedIndex => savedIndex !== trackIndex)
+  ].slice(0, RECENTLY_PLAYED_LIMIT);
+
+  saveRecentlyPlayed();
+
+  if (state.activePlaylistId === "recently-played"){
+    updateHeroDetails();
+    renderTrackList(searchInput?.value || "");
+    updateHeroPlayIcon();
+    updatePlaylistActions();
+  }
+
+  if (state.playingPlaylistId === "recently-played"){
+    updateNowPlayingPanel();
+  }
+}
+
+function clearRecentlyPlayed(){
+  if (state.recentlyPlayed.length === 0) return;
+
+  const shouldClear = window.confirm("Clear your Recently Played history?");
+  if (!shouldClear) return;
+
+  state.recentlyPlayed = [];
+  saveRecentlyPlayed();
+  searchInput.value = "";
+  searchClearBtn.hidden = true;
+  updateHeroDetails();
+  renderTrackList();
+  updateHeroPlayIcon();
+  updatePlaylistActions();
+
+  if (state.playingPlaylistId === "recently-played"){
+    updateNowPlayingPanel();
+  }
 }
 
 function updateHeroDetails(){
@@ -321,6 +465,7 @@ function updatePlaylistView(){
 
   renderTrackList();
   updateHeroPlayIcon();
+  updatePlaylistActions();
 }
 
 // ============ Rendering and filtering the track list ============
@@ -339,10 +484,15 @@ function renderTrackList(query = ""){
     });
 
   if (matchingTracks.length === 0){
-    const emptyMessage =
-      state.activePlaylistId === "liked-songs" && !normalizedQuery
-        ? "Your Liked Songs playlist is empty. Tap a heart beside any song to add it."
-        : "No songs found";
+    let emptyMessage = "No songs found";
+
+    if (!normalizedQuery && state.activePlaylistId === "liked-songs"){
+      emptyMessage = "Your Liked Songs playlist is empty. Tap a heart beside any song to add it.";
+    }
+
+    if (!normalizedQuery && state.activePlaylistId === "recently-played"){
+      emptyMessage = "Your Recently Played history is empty. Play any song to add it here.";
+    }
 
     trackListEl.innerHTML = `
       <p class="search-empty-state" role="status">${emptyMessage}</p>
@@ -470,6 +620,10 @@ function playActivePlaylist(){
 }
 
 function playNext(){
+  if (getPlaylist(state.playingPlaylistId).trackIndices.length === 0){
+    audio.pause();
+    return;
+  }
   loadTrack(getNextTrackIndex(), true);
 }
 
@@ -480,6 +634,7 @@ function playPrev(){
     return;
   }
   const indices = getPlaylist(state.playingPlaylistId).trackIndices;
+  if (indices.length === 0) return;
   const currentPosition = indices.indexOf(state.currentIndex);
   const previousPosition = currentPosition <= 0 ? indices.length - 1 : currentPosition - 1;
   loadTrack(indices[previousPosition], true);
@@ -497,6 +652,7 @@ function seekBy(seconds){
 // ============ Audio events ============
 audio.addEventListener('play', () => {
   state.isPlaying = true;
+  addRecentlyPlayed(state.currentIndex);
   playIcon.textContent = "pause";
   updateHeroPlayIcon();
   playerBar.classList.add('is-playing');
@@ -557,20 +713,37 @@ searchClearBtn?.addEventListener('click', () => {
 
 likeBtn.addEventListener('click', toggleCurrentLike);
 panelLikeBtn.addEventListener('click', toggleCurrentLike);
+clearHistoryBtn.addEventListener('click', clearRecentlyPlayed);
 
 window.addEventListener('storage', event => {
-  if (event.key !== LIKED_SONGS_STORAGE_KEY) return;
-  state.liked = readSavedLikedSongs();
-  updateLikeButtons();
+  if (event.key === LIKED_SONGS_STORAGE_KEY){
+    state.liked = readSavedLikedSongs();
+    updateLikeButtons();
 
-  if (state.activePlaylistId === "liked-songs"){
-    updateHeroDetails();
-    renderTrackList(searchInput?.value || "");
-    updateHeroPlayIcon();
+    if (state.activePlaylistId === "liked-songs"){
+      updateHeroDetails();
+      renderTrackList(searchInput?.value || "");
+      updateHeroPlayIcon();
+    }
+
+    if (state.playingPlaylistId === "liked-songs"){
+      updateNowPlayingPanel();
+    }
   }
 
-  if (state.playingPlaylistId === "liked-songs"){
-    updateNowPlayingPanel();
+  if (event.key === RECENTLY_PLAYED_STORAGE_KEY){
+    state.recentlyPlayed = readRecentlyPlayed();
+
+    if (state.activePlaylistId === "recently-played"){
+      updateHeroDetails();
+      renderTrackList(searchInput?.value || "");
+      updateHeroPlayIcon();
+      updatePlaylistActions();
+    }
+
+    if (state.playingPlaylistId === "recently-played"){
+      updateNowPlayingPanel();
+    }
   }
 });
 
