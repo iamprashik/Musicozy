@@ -1,3 +1,5 @@
+<!-- MUSICOZY STEP 6B — ADD SONGS TO PLAYLISTS -->
+<!-- MUSICOZY STEP 6A — CREATE CUSTOM PLAYLIST -->
 <!-- MUSICOZY STEP 5 — RECENTLY PLAYED -->
 <!-- MUSICOZY STEP 4 — FUNCTIONAL QUEUE -->
 <!-- MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST -->
@@ -35,6 +37,10 @@
 
       <div class="playlists">
         <p class="playlists-label">Playlists</p>
+        <button class="create-playlist-btn" id="create-playlist-btn" type="button">
+          <span class="material-symbols-rounded">add_box</span>
+          <span>Create Playlist</span>
+        </button>
         <a href="#" class="playlist-item liked-songs-item" data-playlist-id="liked-songs">
           <span class="material-symbols-rounded">favorite</span>
           <span>Liked Songs</span>
@@ -48,6 +54,7 @@
         <a href="#" class="playlist-item" data-playlist-id="sunday-coffee">Sunday Coffee</a>
         <a href="#" class="playlist-item" data-playlist-id="deep-focus">Deep Focus</a>
         <a href="#" class="playlist-item" data-playlist-id="rainy-window">Rainy Window</a>
+        <div class="custom-playlist-list" id="custom-playlist-list"></div>
       </div>
     </div>
   </aside>
@@ -125,7 +132,7 @@
           <span class="col-index">#</span>
           <span class="col-title">Title</span>
           <span class="col-album">Album</span>
-          <span class="col-like" aria-hidden="true"></span>
+          <span class="col-add" aria-hidden="true"></span>
           <span class="col-duration"><span class="material-symbols-rounded">schedule</span></span>
         </div>
         <div class="track-list" id="track-list" aria-live="polite">
@@ -222,10 +229,87 @@
   </div>
 </footer>
 
+<!-- CREATE PLAYLIST DIALOG -->
+<div class="playlist-modal" id="playlist-modal" hidden>
+  <div class="playlist-modal-backdrop" data-close-playlist-modal></div>
+  <section
+    class="playlist-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="playlist-dialog-title"
+    aria-describedby="playlist-dialog-copy"
+  >
+    <div class="playlist-dialog-header">
+      <div>
+        <p class="playlist-dialog-kicker">Your Library</p>
+        <h2 id="playlist-dialog-title">Create a playlist</h2>
+      </div>
+      <button class="playlist-dialog-close" type="button" aria-label="Close" data-close-playlist-modal>
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+
+    <p class="playlist-dialog-copy" id="playlist-dialog-copy">Give your new playlist a name, then use the + beside any song to add it.</p>
+
+    <form class="playlist-form" id="playlist-form" novalidate>
+      <label for="playlist-name-input">Playlist name</label>
+      <input
+        id="playlist-name-input"
+        type="text"
+        maxlength="40"
+        placeholder="My playlist"
+        autocomplete="off"
+        required
+      >
+      <p class="playlist-name-error" id="playlist-name-error" role="alert"></p>
+      <div class="playlist-dialog-actions">
+        <button class="dialog-btn dialog-btn-secondary" type="button" data-close-playlist-modal>Cancel</button>
+        <button class="dialog-btn dialog-btn-primary" type="submit">Create</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<!-- ADD TO PLAYLIST DIALOG -->
+<div class="playlist-modal" id="add-to-playlist-modal" hidden>
+  <div class="playlist-modal-backdrop" data-close-add-to-playlist></div>
+  <section
+    class="playlist-dialog add-to-playlist-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="add-to-playlist-title"
+    aria-describedby="add-to-playlist-copy"
+  >
+    <div class="playlist-dialog-header">
+      <div>
+        <p class="playlist-dialog-kicker">Choose destinations</p>
+        <h2 id="add-to-playlist-title">Add to playlist</h2>
+      </div>
+      <button class="playlist-dialog-close" type="button" aria-label="Close" data-close-add-to-playlist>
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+
+    <p class="playlist-dialog-copy" id="add-to-playlist-copy">Choose every playlist where this song should appear.</p>
+    <p class="destination-track-name" id="destination-track-name"></p>
+    <div class="playlist-destination-list" id="playlist-destination-list"></div>
+
+    <div class="playlist-dialog-actions">
+      <button class="dialog-btn dialog-btn-primary" type="button" data-close-add-to-playlist>Done</button>
+    </div>
+  </section>
+</div>
+
+<!-- ADDED TO PLAYLIST MESSAGE -->
+<div class="playlist-toast" id="playlist-toast" role="status" aria-live="polite" hidden>
+  <span class="material-symbols-rounded playlist-toast-heart">favorite</span>
+  <span class="playlist-toast-message" id="playlist-toast-message">Added to Liked Songs.</span>
+  <button class="playlist-toast-change" id="playlist-toast-change" type="button">Change</button>
+</div>
+
 <audio id="audio"></audio>
 <div id="cursor-tooltip" class="cursor-tooltip"></div>
 
 <script src="script.js"></script>
 </body>
 </html>
-
