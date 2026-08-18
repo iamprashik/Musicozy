@@ -1,3 +1,5 @@
+<!-- MUSICOZY STEP 5 — RECENTLY PLAYED -->
+<!-- MUSICOZY STEP 4 — FUNCTIONAL QUEUE -->
 <!-- MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST -->
 <!-- MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH -->
 <!-- MUSICOZY LIKES STEP 1 — HEART BUTTONS -->
@@ -36,6 +38,10 @@
         <a href="#" class="playlist-item liked-songs-item" data-playlist-id="liked-songs">
           <span class="material-symbols-rounded">favorite</span>
           <span>Liked Songs</span>
+        </a>
+        <a href="#" class="playlist-item recently-played-item" data-playlist-id="recently-played">
+          <span class="material-symbols-rounded">history</span>
+          <span>Recently Played</span>
         </a>
         <div class="playlist-divider" aria-hidden="true"></div>
         <a href="#" class="playlist-item active" data-playlist-id="late-night-drive">Late Night Drive</a>
@@ -104,6 +110,14 @@
         </button>
         <button class="round-btn ghost" aria-label="Like playlist"><span class="material-symbols-rounded">favorite</span></button>
         <button class="round-btn ghost" aria-label="More options"><span class="material-symbols-rounded">more_horiz</span></button>
+        <button
+          class="round-btn ghost clear-history-btn has-tooltip"
+          id="clear-history-btn"
+          type="button"
+          aria-label="Clear recently played history"
+          data-tooltip="Clear history"
+          hidden
+        ><span class="material-symbols-rounded">delete_sweep</span></button>
       </div>
 
       <section class="track-table">
@@ -154,14 +168,10 @@
       <div class="up-next">
         <div class="up-next-heading">
           <p class="panel-section-label">Next in queue</p>
-          <span>Up next</span>
+          <span>Next 3</span>
         </div>
-        <div class="up-next-track">
-          <img id="up-next-art" src="https://picsum.photos/seed/nighttimesolitude/300/300" alt="Next track artwork">
-          <div>
-            <p id="up-next-title">Nighttime Solitude</p>
-            <span id="up-next-artist">celestialghost8</span>
-          </div>
+        <div class="queue-list" id="queue-list" aria-live="polite">
+          <!-- Upcoming songs are injected by JavaScript. -->
         </div>
       </div>
     </div>
