@@ -1,3 +1,6 @@
+/* MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK */
+/* MUSICOZY STEP 8 — PLAYLIST FAVORITES AND MAIN ACTION MENU */
+/* MUSICOZY STEP 7 — RENAME AND DELETE CUSTOM PLAYLISTS */
 /* MUSICOZY STEP 6B — ADD SONGS TO PLAYLISTS */
 /* MUSICOZY STEP 6A — CREATE CUSTOM PLAYLIST */
 /* MUSICOZY STEP 5 — RECENTLY PLAYED */
@@ -261,10 +264,26 @@ button:focus-visible, a:focus-visible{
   font-size:16px;
 }
 .custom-playlist-name{
+  flex:1;
   min-width:0;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+}
+.playlist-item.is-favorite{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.playlist-item.is-favorite::after{
+  content:"favorite";
+  flex-shrink:0;
+  margin-left:auto;
+  color:var(--amber);
+  font-family:'Material Symbols Rounded';
+  font-size:17px;
+  line-height:1;
+  font-variation-settings:'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
 
 /* ============ Create playlist dialog ============ */
@@ -1013,6 +1032,44 @@ button:focus-visible, a:focus-visible{
   gap: 18px;
   margin-bottom: 30px;
 }
+.playlist-favorite-btn.is-liked{
+  color:var(--amber);
+  border-color:var(--amber-dim);
+}
+.playlist-actions-menu-wrap{
+  position:relative;
+}
+.playlist-actions-menu{
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  z-index:40;
+  width:182px;
+  padding:5px;
+  background:#211e23;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:0 14px 34px rgba(0,0,0,.55);
+}
+.playlist-actions-menu[hidden]{ display:none; }
+.playlist-actions-menu button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:9px 10px;
+  border-radius:var(--radius-sm);
+  color:var(--text);
+  font-size:12.5px;
+  text-align:left;
+}
+.playlist-actions-menu button:hover{ background:var(--surface-hover); }
+.playlist-actions-menu .material-symbols-rounded{
+  color:var(--text-muted);
+  font-size:17px;
+}
+.playlist-actions-menu .delete-playlist-option{ color:#f08080; }
+.playlist-actions-menu .delete-playlist-option .material-symbols-rounded{ color:#f08080; }
 .play-pill{
   width: 52px; height:52px;
   border-radius: 50%;

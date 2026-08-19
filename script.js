@@ -1,3 +1,6 @@
+// MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK
+// MUSICOZY STEP 8 — PLAYLIST FAVORITES AND MAIN ACTION MENU
+// MUSICOZY STEP 7 — RENAME AND DELETE CUSTOM PLAYLISTS
 // MUSICOZY STEP 6B — ADD SONGS TO PLAYLISTS
 // MUSICOZY STEP 6A — CREATE CUSTOM PLAYLIST
 // MUSICOZY STEP 5 — RECENTLY PLAYED
@@ -235,6 +238,40 @@ function saveCustomPlaylists(){
   }
 }
 
+// ============ Saved favorite playlists ============
+const FAVORITE_PLAYLISTS_STORAGE_KEY = "musicozy-favorite-playlists-v1";
+
+function readFavoritePlaylists(){
+  try {
+    const savedPlaylistIds = JSON.parse(
+      localStorage.getItem(FAVORITE_PLAYLISTS_STORAGE_KEY) || "[]"
+    );
+
+    if (!Array.isArray(savedPlaylistIds)) return new Set();
+
+    return new Set(
+      savedPlaylistIds.filter(playlistId =>
+        typeof playlistId === "string" &&
+        (Boolean(playlists[playlistId]) || /^custom-[a-zA-Z0-9-]+$/.test(playlistId))
+      )
+    );
+  } catch (error) {
+    console.warn("Musicozy could not read favorite playlists:", error);
+    return new Set();
+  }
+}
+
+function saveFavoritePlaylists(){
+  try {
+    localStorage.setItem(
+      FAVORITE_PLAYLISTS_STORAGE_KEY,
+      JSON.stringify([...state.favoritePlaylists])
+    );
+  } catch (error) {
+    console.warn("Musicozy could not save favorite playlists:", error);
+  }
+}
+
 // ============ State ============
 const state = {
   currentIndex: 0,
@@ -244,7 +281,8 @@ const state = {
   isSeeking: false,
   liked: readSavedLikedSongs(),
   recentlyPlayed: readRecentlyPlayed(),
-  customPlaylists: readCustomPlaylists()
+  customPlaylists: readCustomPlaylists(),
+  favoritePlaylists: readFavoritePlaylists()
 };
 
 // ============ DOM refs ============
@@ -259,6 +297,9 @@ const playlistModal = document.getElementById('playlist-modal');
 const playlistForm = document.getElementById('playlist-form');
 const playlistNameInput = document.getElementById('playlist-name-input');
 const playlistNameError = document.getElementById('playlist-name-error');
+const playlistDialogTitle = document.getElementById('playlist-dialog-title');
+const playlistDialogCopy = document.getElementById('playlist-dialog-copy');
+const playlistSubmitBtn = document.getElementById('playlist-submit-btn');
 const addToPlaylistModal = document.getElementById('add-to-playlist-modal');
 const destinationTrackName = document.getElementById('destination-track-name');
 const playlistDestinationList = document.getElementById('playlist-destination-list');
@@ -267,6 +308,7 @@ const playlistToastMessage = document.getElementById('playlist-toast-message');
 const playlistToastChange = document.getElementById('playlist-toast-change');
 let destinationTrackIndex = null;
 let playlistToastTimer = null;
+let editingPlaylistId = null;
 
 const heroArt = document.getElementById('hero-art');
 const heroTitle = document.getElementById('hero-title');
@@ -281,6 +323,11 @@ const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
 const heroPlayBtn = document.getElementById('hero-play');
 const heroPlayIcon = document.getElementById('hero-play-icon');
+const playlistFavoriteBtn = document.getElementById('playlist-favorite-btn');
+const playlistMoreBtn = document.getElementById('playlist-more-btn');
+const playlistActionsMenu = document.getElementById('playlist-actions-menu');
+const renamePlaylistAction = document.getElementById('rename-playlist-action');
+const deletePlaylistAction = document.getElementById('delete-playlist-action');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
@@ -478,9 +525,47 @@ function toggleCurrentLike(){
   toggleTrackLike(state.currentIndex);
 }
 
+function updatePlaylistFavoriteUI(){
+  const isFavorite = state.favoritePlaylists.has(state.activePlaylistId);
+
+  playlistFavoriteBtn.classList.toggle('is-liked', isFavorite);
+  playlistFavoriteBtn.setAttribute('aria-pressed', String(isFavorite));
+  playlistFavoriteBtn.setAttribute(
+    'aria-label',
+    isFavorite ? 'Remove playlist from favorites' : 'Save playlist to favorites'
+  );
+
+  document.querySelectorAll('.playlist-item[data-playlist-id]').forEach(item => {
+    item.classList.toggle(
+      'is-favorite',
+      state.favoritePlaylists.has(item.dataset.playlistId)
+    );
+  });
+}
+
+function toggleActivePlaylistFavorite(){
+  const playlistId = state.activePlaylistId;
+
+  if (state.favoritePlaylists.has(playlistId)){
+    state.favoritePlaylists.delete(playlistId);
+  } else {
+    state.favoritePlaylists.add(playlistId);
+  }
+
+  saveFavoritePlaylists();
+  updatePlaylistFavoriteUI();
+}
+
 function updatePlaylistActions(){
   const isRecentlyPlayed = state.activePlaylistId === "recently-played";
+  const isCustomPlaylist = Boolean(getCustomPlaylistRecord(state.activePlaylistId));
+
   clearHistoryBtn.hidden = !isRecentlyPlayed || state.recentlyPlayed.length === 0;
+  playlistMoreBtn.hidden = !isCustomPlaylist;
+
+  if (!isCustomPlaylist){
+    closePlaylistActionsMenu();
+  }
 }
 
 function addRecentlyPlayed(trackIndex){
@@ -540,11 +625,16 @@ function escapeHtml(value){
 
 function renderCustomPlaylists(){
   customPlaylistList.innerHTML = state.customPlaylists.map(playlist => `
-    <a href="#" class="playlist-item custom-playlist-item" data-playlist-id="${playlist.id}">
+    <a href="#" class="playlist-item custom-playlist-item${playlist.id === state.activePlaylistId ? " active" : ""}${state.favoritePlaylists.has(playlist.id) ? " is-favorite" : ""}" data-playlist-id="${playlist.id}">
       <span class="material-symbols-rounded">queue_music</span>
       <span class="custom-playlist-name">${escapeHtml(playlist.name)}</span>
     </a>
   `).join("");
+}
+
+function closePlaylistActionsMenu(){
+  playlistActionsMenu.hidden = true;
+  playlistMoreBtn.setAttribute('aria-expanded', 'false');
 }
 
 function createCustomPlaylistId(){
@@ -552,15 +642,28 @@ function createCustomPlaylistId(){
   return `custom-${Date.now()}-${randomPart}`;
 }
 
-function openPlaylistModal(){
+function openPlaylistModal(playlistId = null){
+  const playlist = getCustomPlaylistRecord(playlistId);
+  editingPlaylistId = playlist?.id || null;
+
+  playlistDialogTitle.textContent = editingPlaylistId ? "Rename playlist" : "Create a playlist";
+  playlistDialogCopy.textContent = editingPlaylistId
+    ? "Choose a new name for this playlist. Its songs will stay exactly where they are."
+    : "Give your new playlist a name, then use the + beside any song to add it.";
+  playlistSubmitBtn.textContent = editingPlaylistId ? "Save" : "Create";
   playlistModal.hidden = false;
-  playlistNameInput.value = "";
+  playlistNameInput.value = playlist?.name || "";
   playlistNameError.textContent = "";
-  setTimeout(() => playlistNameInput.focus(), 0);
+  closePlaylistActionsMenu();
+  setTimeout(() => {
+    playlistNameInput.focus();
+    if (editingPlaylistId) playlistNameInput.select();
+  }, 0);
 }
 
 function closePlaylistModal(){
   playlistModal.hidden = true;
+  editingPlaylistId = null;
   playlistNameInput.value = "";
   playlistNameError.textContent = "";
   createPlaylistBtn.focus();
@@ -598,6 +701,84 @@ function createCustomPlaylist(playlistName){
   renderCustomPlaylists();
   state.activePlaylistId = id;
   updatePlaylistView();
+  return true;
+}
+
+function renameCustomPlaylist(playlistId, playlistName){
+  const playlist = getCustomPlaylistRecord(playlistId);
+  const name = playlistName.trim().slice(0, 40);
+
+  if (!playlist) return false;
+
+  if (!name){
+    playlistNameError.textContent = "Enter a playlist name.";
+    playlistNameInput.focus();
+    return false;
+  }
+
+  const nameAlreadyExists = state.customPlaylists.some(
+    item => item.id !== playlistId && item.name.toLowerCase() === name.toLowerCase()
+  );
+
+  if (nameAlreadyExists){
+    playlistNameError.textContent = "You already have a playlist with this name.";
+    playlistNameInput.focus();
+    return false;
+  }
+
+  playlist.name = name;
+  saveCustomPlaylists();
+  renderCustomPlaylists();
+
+  if (state.activePlaylistId === playlistId){
+    updateHeroDetails();
+    renderTrackList(searchInput?.value || "");
+  }
+
+  if (state.playingPlaylistId === playlistId){
+    updateNowPlayingPanel();
+  }
+
+  if (!addToPlaylistModal.hidden && Number.isInteger(destinationTrackIndex)){
+    renderPlaylistDestinations();
+  }
+
+  return true;
+}
+
+function deleteCustomPlaylist(playlistId){
+  const playlist = getCustomPlaylistRecord(playlistId);
+  if (!playlist) return false;
+
+  const shouldDelete = window.confirm(
+    `Delete "${playlist.name}"? This will remove the playlist, but not the songs from Musicozy.`
+  );
+  if (!shouldDelete) return false;
+
+  const activePlaylistWasDeleted = state.activePlaylistId === playlistId;
+  const playingPlaylistWasDeleted = state.playingPlaylistId === playlistId;
+
+  state.customPlaylists = state.customPlaylists.filter(item => item.id !== playlistId);
+  state.favoritePlaylists.delete(playlistId);
+  saveCustomPlaylists();
+  saveFavoritePlaylists();
+  closePlaylistActionsMenu();
+  renderCustomPlaylists();
+
+  if (activePlaylistWasDeleted){
+    state.activePlaylistId = "late-night-drive";
+    updatePlaylistView();
+  }
+
+  if (playingPlaylistWasDeleted){
+    state.playingPlaylistId = "late-night-drive";
+    updateNowPlayingPanel();
+  }
+
+  if (!addToPlaylistModal.hidden && Number.isInteger(destinationTrackIndex)){
+    renderPlaylistDestinations();
+  }
+
   return true;
 }
 
@@ -746,6 +927,7 @@ function updatePlaylistView(){
 
   renderTrackList();
   updateHeroPlayIcon();
+  updatePlaylistFavoriteUI();
   updatePlaylistActions();
 }
 
@@ -755,6 +937,9 @@ function renderTrackList(query = ""){
   const normalizedQuery = query.trim().toLowerCase();
   const playlist = getPlaylist();
   const isLikedSongsView = state.activePlaylistId === "liked-songs";
+  const isCustomPlaylistView = Boolean(getCustomPlaylistRecord(state.activePlaylistId));
+  const isManagedPlaylistView = isLikedSongsView || isCustomPlaylistView;
+  const safePlaylistName = escapeHtml(playlist.name);
   const matchingTracks = playlist.trackIndices
     .map((trackIndex, position) => ({
       track: tracks[trackIndex],
@@ -800,19 +985,19 @@ function renderTrackList(query = ""){
           <span class="t-artist">${t.artist}</span>
         </span>
       </span>
-      <span class="col-album">${playlist.name}</span>
+      <span class="col-album">${safePlaylistName}</span>
       <span class="col-add">
         <button
-          class="track-add-btn${isLikedSongsView ? " is-liked-indicator" : ""}"
+          class="track-add-btn${isManagedPlaylistView ? " is-liked-indicator" : ""}"
           data-add-index="${trackIndex}"
-          data-playlist-action="${isLikedSongsView ? "manage" : "add"}"
+          data-playlist-action="${isManagedPlaylistView ? "manage" : "add"}"
           type="button"
-          aria-label="${isLikedSongsView
-            ? `${t.title} is already in Liked Songs. Manage playlists`
+          aria-label="${isManagedPlaylistView
+            ? `${t.title} is already in ${safePlaylistName}. Manage playlists`
             : `Add ${t.title} to Liked Songs or another playlist`}"
-          title="${isLikedSongsView ? "Already in Liked Songs — manage playlists" : "Add to playlist"}"
+          title="${isManagedPlaylistView ? `Already in ${safePlaylistName} — manage playlists` : "Add to playlist"}"
         >
-          <span class="material-symbols-rounded">${isLikedSongsView ? "check_circle" : "add"}</span>
+          <span class="material-symbols-rounded">${isManagedPlaylistView ? "check_circle" : "add"}</span>
         </button>
       </span>
       <span class="col-duration" data-duration-for="${trackIndex}">${Number.isFinite(t.duration) ? formatTime(t.duration) : "--:--"}</span>
@@ -989,6 +1174,7 @@ playlistsEl.addEventListener('click', event => {
   if (!item) return;
 
   event.preventDefault();
+  closePlaylistActionsMenu();
   const playlistId = item.dataset.playlistId;
   if (!getPlaylist(playlistId) || playlistId === state.activePlaylistId) return;
 
@@ -996,11 +1182,49 @@ playlistsEl.addEventListener('click', event => {
   updatePlaylistView();
 });
 
-createPlaylistBtn.addEventListener('click', openPlaylistModal);
+playlistFavoriteBtn.addEventListener('click', toggleActivePlaylistFavorite);
+
+playlistMoreBtn.addEventListener('click', event => {
+  event.preventDefault();
+  event.stopPropagation();
+  const shouldOpen = playlistActionsMenu.hidden;
+  closePlaylistActionsMenu();
+
+  if (shouldOpen){
+    playlistActionsMenu.hidden = false;
+    playlistMoreBtn.setAttribute('aria-expanded', 'true');
+  }
+});
+
+renamePlaylistAction.addEventListener('click', event => {
+  event.stopPropagation();
+  const playlistId = state.activePlaylistId;
+  closePlaylistActionsMenu();
+  if (getCustomPlaylistRecord(playlistId)) openPlaylistModal(playlistId);
+});
+
+deletePlaylistAction.addEventListener('click', event => {
+  event.stopPropagation();
+  const playlistId = state.activePlaylistId;
+  closePlaylistActionsMenu();
+  if (getCustomPlaylistRecord(playlistId)) deleteCustomPlaylist(playlistId);
+});
+
+document.addEventListener('click', event => {
+  if (!event.target.closest?.('.playlist-actions-menu-wrap')){
+    closePlaylistActionsMenu();
+  }
+});
+
+createPlaylistBtn.addEventListener('click', () => openPlaylistModal());
 
 playlistForm.addEventListener('submit', event => {
   event.preventDefault();
-  if (createCustomPlaylist(playlistNameInput.value)){
+  const wasSaved = editingPlaylistId
+    ? renameCustomPlaylist(editingPlaylistId, playlistNameInput.value)
+    : createCustomPlaylist(playlistNameInput.value);
+
+  if (wasSaved){
     closePlaylistModal();
   }
 });
@@ -1033,7 +1257,10 @@ document.addEventListener('keydown', event => {
 
   if (!playlistModal.hidden){
     closePlaylistModal();
+    return;
   }
+
+  closePlaylistActionsMenu();
 });
 
 searchInput?.addEventListener('input', () => {
@@ -1082,6 +1309,11 @@ window.addEventListener('storage', event => {
     if (state.playingPlaylistId === "recently-played"){
       updateNowPlayingPanel();
     }
+  }
+
+  if (event.key === FAVORITE_PLAYLISTS_STORAGE_KEY){
+    state.favoritePlaylists = readFavoritePlaylists();
+    updatePlaylistFavoriteUI();
   }
 
   if (event.key === CUSTOM_PLAYLISTS_STORAGE_KEY){

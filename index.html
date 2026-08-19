@@ -1,3 +1,6 @@
+<!-- MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK -->
+<!-- MUSICOZY STEP 8 — PLAYLIST FAVORITES AND MAIN ACTION MENU -->
+<!-- MUSICOZY STEP 7 — RENAME AND DELETE CUSTOM PLAYLISTS -->
 <!-- MUSICOZY STEP 6C — LIKED SONGS GREEN TICK -->
 <!-- MUSICOZY STEP 6B — ADD SONGS TO PLAYLISTS -->
 <!-- MUSICOZY STEP 6A — CREATE CUSTOM PLAYLIST -->
@@ -116,8 +119,33 @@
         <button class="play-pill" id="hero-play" aria-label="Play playlist">
           <span class="material-symbols-rounded" id="hero-play-icon">play_arrow</span>
         </button>
-        <button class="round-btn ghost" aria-label="Like playlist"><span class="material-symbols-rounded">favorite</span></button>
-        <button class="round-btn ghost" aria-label="More options"><span class="material-symbols-rounded">more_horiz</span></button>
+        <button
+          class="round-btn ghost playlist-favorite-btn"
+          id="playlist-favorite-btn"
+          type="button"
+          aria-label="Save playlist to favorites"
+          aria-pressed="false"
+        ><span class="material-symbols-rounded">favorite</span></button>
+        <div class="playlist-actions-menu-wrap">
+          <button
+            class="round-btn ghost"
+            id="playlist-more-btn"
+            type="button"
+            aria-label="Playlist options"
+            aria-haspopup="menu"
+            aria-expanded="false"
+          ><span class="material-symbols-rounded">more_horiz</span></button>
+          <div class="playlist-actions-menu" id="playlist-actions-menu" role="menu" hidden>
+            <button id="rename-playlist-action" type="button" role="menuitem">
+              <span class="material-symbols-rounded">edit</span>
+              <span>Rename playlist</span>
+            </button>
+            <button class="delete-playlist-option" id="delete-playlist-action" type="button" role="menuitem">
+              <span class="material-symbols-rounded">delete</span>
+              <span>Delete playlist</span>
+            </button>
+          </div>
+        </div>
         <button
           class="round-btn ghost clear-history-btn has-tooltip"
           id="clear-history-btn"
@@ -265,7 +293,7 @@
       <p class="playlist-name-error" id="playlist-name-error" role="alert"></p>
       <div class="playlist-dialog-actions">
         <button class="dialog-btn dialog-btn-secondary" type="button" data-close-playlist-modal>Cancel</button>
-        <button class="dialog-btn dialog-btn-primary" type="submit">Create</button>
+        <button class="dialog-btn dialog-btn-primary" id="playlist-submit-btn" type="submit">Create</button>
       </div>
     </form>
   </section>
