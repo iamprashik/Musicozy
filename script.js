@@ -749,10 +749,12 @@ function updatePlaylistView(){
   updatePlaylistActions();
 }
 
+// MUSICOZY STEP 6C — LIKED SONGS GREEN TICK
 // ============ Rendering and filtering the track list ============
 function renderTrackList(query = ""){
   const normalizedQuery = query.trim().toLowerCase();
   const playlist = getPlaylist();
+  const isLikedSongsView = state.activePlaylistId === "liked-songs";
   const matchingTracks = playlist.trackIndices
     .map((trackIndex, position) => ({
       track: tracks[trackIndex],
@@ -801,13 +803,16 @@ function renderTrackList(query = ""){
       <span class="col-album">${playlist.name}</span>
       <span class="col-add">
         <button
-          class="track-add-btn"
+          class="track-add-btn${isLikedSongsView ? " is-liked-indicator" : ""}"
           data-add-index="${trackIndex}"
+          data-playlist-action="${isLikedSongsView ? "manage" : "add"}"
           type="button"
-          aria-label="Add ${t.title} to Liked Songs or another playlist"
-          title="Add to playlist"
+          aria-label="${isLikedSongsView
+            ? `${t.title} is already in Liked Songs. Manage playlists`
+            : `Add ${t.title} to Liked Songs or another playlist`}"
+          title="${isLikedSongsView ? "Already in Liked Songs — manage playlists" : "Add to playlist"}"
         >
-          <span class="material-symbols-rounded">add</span>
+          <span class="material-symbols-rounded">${isLikedSongsView ? "check_circle" : "add"}</span>
         </button>
       </span>
       <span class="col-duration" data-duration-for="${trackIndex}">${Number.isFinite(t.duration) ? formatTime(t.duration) : "--:--"}</span>
@@ -817,7 +822,14 @@ function renderTrackList(query = ""){
   trackListEl.querySelectorAll('.track-add-btn').forEach(button => {
     button.addEventListener('click', event => {
       event.stopPropagation();
-      addTrackToLikedSongs(Number(button.dataset.addIndex));
+      const trackIndex = Number(button.dataset.addIndex);
+
+      if (button.dataset.playlistAction === "manage"){
+        openAddToPlaylistModal(trackIndex);
+        return;
+      }
+
+      addTrackToLikedSongs(trackIndex);
     });
   });
 
