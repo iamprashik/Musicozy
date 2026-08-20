@@ -1,17 +1,3 @@
-/* MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK */
-/* MUSICOZY STEP 8 — PLAYLIST FAVORITES AND MAIN ACTION MENU */
-/* MUSICOZY STEP 7 — RENAME AND DELETE CUSTOM PLAYLISTS */
-/* MUSICOZY STEP 6B — ADD SONGS TO PLAYLISTS */
-/* MUSICOZY STEP 6A — CREATE CUSTOM PLAYLIST */
-/* MUSICOZY STEP 5 — RECENTLY PLAYED */
-/* MUSICOZY STEP 4 — FUNCTIONAL QUEUE */
-/* MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST */
-/* MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH */
-/* MUSICOZY LIKES STEP 1 — HEART BUTTONS */
-/* MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE */
-/* MUSICOZY NAVBAR OVERLAP FIX — REVISION 7 */
-/* MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1 */
-/* ============ Tokens ============ */
 :root{
   --bg: #000000;
   --panel-bg: #121212;
@@ -1090,6 +1076,73 @@ button:focus-visible, a:focus-visible{
   background:var(--amber);
   transform:none;
 }
+
+/* ---- Playlist sorting ---- */
+.track-toolbar{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:-18px;
+  margin-bottom:10px;
+}
+.track-sort-wrap{ position:relative; }
+.track-sort-btn{
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 10px;
+  border-radius:999px;
+  color:var(--text-muted);
+  font-size:12px;
+  font-weight:600;
+  transition:color .15s ease, background .15s ease;
+}
+.track-sort-btn:hover,
+.track-sort-btn[aria-expanded="true"]{
+  color:var(--text);
+  background:var(--surface-hover);
+}
+.track-sort-btn > .material-symbols-rounded{ font-size:18px; }
+.track-sort-chevron{ font-size:16px !important; }
+.track-sort-menu{
+  position:absolute;
+  top:calc(100% + 6px);
+  right:0;
+  z-index:40;
+  width:196px;
+  padding:5px;
+  background:#211e23;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:0 14px 34px rgba(0,0,0,.55);
+}
+.track-sort-menu[hidden]{ display:none; }
+.track-sort-menu button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 10px;
+  border-radius:var(--radius-sm);
+  color:var(--text-muted);
+  font-size:12.5px;
+  text-align:left;
+}
+.track-sort-menu button:hover{
+  color:var(--text);
+  background:var(--surface-hover);
+}
+.track-sort-menu button.is-selected{
+  color:var(--amber);
+  font-weight:600;
+}
+.sort-option-check{
+  flex-shrink:0;
+  font-size:17px;
+  opacity:0;
+}
+.track-sort-menu button.is-selected .sort-option-check{ opacity:1; }
 
 /* ---- Track table ---- */
 .track-table{ padding-bottom: 8px; }
