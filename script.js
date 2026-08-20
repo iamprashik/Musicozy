@@ -1,18 +1,3 @@
-// MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK
-// MUSICOZY STEP 8 — PLAYLIST FAVORITES AND MAIN ACTION MENU
-// MUSICOZY STEP 7 — RENAME AND DELETE CUSTOM PLAYLISTS
-// MUSICOZY STEP 6B — ADD SONGS TO PLAYLISTS
-// MUSICOZY STEP 6A — CREATE CUSTOM PLAYLIST
-// MUSICOZY STEP 5 — RECENTLY PLAYED
-// MUSICOZY STEP 4 — FUNCTIONAL QUEUE
-// MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST
-// MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH
-// MUSICOZY LIKES STEP 1 — HEART BUTTONS
-// MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE
-// MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1
-// ============ Track data ============
-// CC0 synthwave tracks from OpenGameArt + placeholder artwork.
-// Source pages and artist credits are included with every track below.
 const tracks = [
   {
     title: "Synth Wave by Alex",
@@ -272,6 +257,48 @@ function saveFavoritePlaylists(){
   }
 }
 
+// ============ Saved playlist sorting ============
+const PLAYLIST_SORT_STORAGE_KEY = "musicozy-playlist-sorts-v1";
+const PLAYLIST_SORT_OPTIONS = {
+  order: "Custom order",
+  "title-asc": "Title A–Z",
+  "artist-asc": "Artist A–Z",
+  "duration-asc": "Shortest duration",
+  "duration-desc": "Longest duration"
+};
+
+function readPlaylistSorts(){
+  try {
+    const savedSorts = JSON.parse(
+      localStorage.getItem(PLAYLIST_SORT_STORAGE_KEY) || "{}"
+    );
+
+    if (!savedSorts || typeof savedSorts !== "object" || Array.isArray(savedSorts)){
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(savedSorts).filter(([, sortKey]) =>
+        Object.prototype.hasOwnProperty.call(PLAYLIST_SORT_OPTIONS, sortKey)
+      )
+    );
+  } catch (error) {
+    console.warn("Musicozy could not read playlist sorting:", error);
+    return {};
+  }
+}
+
+function savePlaylistSorts(){
+  try {
+    localStorage.setItem(
+      PLAYLIST_SORT_STORAGE_KEY,
+      JSON.stringify(state.playlistSorts)
+    );
+  } catch (error) {
+    console.warn("Musicozy could not save playlist sorting:", error);
+  }
+}
+
 // ============ State ============
 const state = {
   currentIndex: 0,
@@ -282,7 +309,8 @@ const state = {
   liked: readSavedLikedSongs(),
   recentlyPlayed: readRecentlyPlayed(),
   customPlaylists: readCustomPlaylists(),
-  favoritePlaylists: readFavoritePlaylists()
+  favoritePlaylists: readFavoritePlaylists(),
+  playlistSorts: readPlaylistSorts()
 };
 
 // ============ DOM refs ============
@@ -328,6 +356,9 @@ const playlistMoreBtn = document.getElementById('playlist-more-btn');
 const playlistActionsMenu = document.getElementById('playlist-actions-menu');
 const renamePlaylistAction = document.getElementById('rename-playlist-action');
 const deletePlaylistAction = document.getElementById('delete-playlist-action');
+const trackSortBtn = document.getElementById('track-sort-btn');
+const trackSortCurrent = document.getElementById('track-sort-current');
+const trackSortMenu = document.getElementById('track-sort-menu');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
@@ -398,8 +429,24 @@ function getPlaylist(playlistId = state.activePlaylistId){
   return playlist;
 }
 
+function getPlaylistSort(playlistId = state.activePlaylistId){
+  return state.playlistSorts[playlistId] || "order";
+}
+
+function getSortedPlaylistTrackIndices(playlistId = state.activePlaylistId){
+  const playlist = getPlaylist(playlistId);
+  const trackEntries = playlist.trackIndices.map((trackIndex, position) => ({
+    track: tracks[trackIndex],
+    trackIndex,
+    position
+  }));
+
+  return sortTrackEntries(trackEntries, getPlaylistSort(playlistId))
+    .map(entry => entry.trackIndex);
+}
+
 function getNextTrackIndex(playlistId = state.playingPlaylistId){
-  const indices = getPlaylist(playlistId).trackIndices;
+  const indices = getSortedPlaylistTrackIndices(playlistId);
   if (indices.length === 0) return state.currentIndex;
   const currentPosition = indices.indexOf(state.currentIndex);
   if (currentPosition === -1) return indices[0];
@@ -407,7 +454,7 @@ function getNextTrackIndex(playlistId = state.playingPlaylistId){
 }
 
 function getUpcomingTrackIndices(playlistId = state.playingPlaylistId, limit = 3){
-  const indices = getPlaylist(playlistId).trackIndices;
+  const indices = getSortedPlaylistTrackIndices(playlistId);
   if (indices.length <= 1) return [];
 
   const currentPosition = indices.indexOf(state.currentIndex);
@@ -637,6 +684,97 @@ function closePlaylistActionsMenu(){
   playlistMoreBtn.setAttribute('aria-expanded', 'false');
 }
 
+function getActivePlaylistSort(){
+  return getPlaylistSort(state.activePlaylistId);
+}
+
+function closeTrackSortMenu(){
+  trackSortMenu.hidden = true;
+  trackSortBtn.setAttribute('aria-expanded', 'false');
+}
+
+function updateTrackSortUI(){
+  const activeSort = getActivePlaylistSort();
+  trackSortCurrent.textContent = PLAYLIST_SORT_OPTIONS[activeSort];
+
+  trackSortMenu.querySelectorAll('[data-sort-key]').forEach(option => {
+    const isSelected = option.dataset.sortKey === activeSort;
+    option.classList.toggle('is-selected', isSelected);
+    option.setAttribute('aria-checked', String(isSelected));
+  });
+}
+
+function setPlaylistSort(sortKey){
+  if (!Object.prototype.hasOwnProperty.call(PLAYLIST_SORT_OPTIONS, sortKey)) return false;
+
+  if (sortKey === "order"){
+    delete state.playlistSorts[state.activePlaylistId];
+  } else {
+    state.playlistSorts[state.activePlaylistId] = sortKey;
+  }
+
+  savePlaylistSorts();
+  updateTrackSortUI();
+  renderTrackList(searchInput?.value || "");
+
+  if (state.playingPlaylistId === state.activePlaylistId){
+    updateNowPlayingPanel();
+  }
+
+  return true;
+}
+
+function compareTrackText(firstTrack, secondTrack, property){
+  const propertyComparison = firstTrack.track[property].localeCompare(
+    secondTrack.track[property],
+    undefined,
+    { sensitivity: "base" }
+  );
+
+  if (propertyComparison !== 0) return propertyComparison;
+  return firstTrack.position - secondTrack.position;
+}
+
+function compareTrackDuration(firstTrack, secondTrack, direction){
+  const firstDuration = Number.isFinite(firstTrack.track.duration)
+    ? firstTrack.track.duration
+    : null;
+  const secondDuration = Number.isFinite(secondTrack.track.duration)
+    ? secondTrack.track.duration
+    : null;
+
+  if (firstDuration === null && secondDuration === null){
+    return firstTrack.position - secondTrack.position;
+  }
+  if (firstDuration === null) return 1;
+  if (secondDuration === null) return -1;
+
+  const durationComparison = (firstDuration - secondDuration) * direction;
+  return durationComparison || firstTrack.position - secondTrack.position;
+}
+
+function sortTrackEntries(trackEntries, sortKey){
+  const sortedTracks = [...trackEntries];
+
+  if (sortKey === "title-asc"){
+    return sortedTracks.sort((first, second) => compareTrackText(first, second, "title"));
+  }
+
+  if (sortKey === "artist-asc"){
+    return sortedTracks.sort((first, second) => compareTrackText(first, second, "artist"));
+  }
+
+  if (sortKey === "duration-asc"){
+    return sortedTracks.sort((first, second) => compareTrackDuration(first, second, 1));
+  }
+
+  if (sortKey === "duration-desc"){
+    return sortedTracks.sort((first, second) => compareTrackDuration(first, second, -1));
+  }
+
+  return sortedTracks;
+}
+
 function createCustomPlaylistId(){
   const randomPart = Math.random().toString(36).slice(2, 9);
   return `custom-${Date.now()}-${randomPart}`;
@@ -655,6 +793,7 @@ function openPlaylistModal(playlistId = null){
   playlistNameInput.value = playlist?.name || "";
   playlistNameError.textContent = "";
   closePlaylistActionsMenu();
+  closeTrackSortMenu();
   setTimeout(() => {
     playlistNameInput.focus();
     if (editingPlaylistId) playlistNameInput.select();
@@ -760,8 +899,10 @@ function deleteCustomPlaylist(playlistId){
 
   state.customPlaylists = state.customPlaylists.filter(item => item.id !== playlistId);
   state.favoritePlaylists.delete(playlistId);
+  delete state.playlistSorts[playlistId];
   saveCustomPlaylists();
   saveFavoritePlaylists();
+  savePlaylistSorts();
   closePlaylistActionsMenu();
   renderCustomPlaylists();
 
@@ -925,6 +1066,8 @@ function updatePlaylistView(){
     searchClearBtn.hidden = true;
   }
 
+  closeTrackSortMenu();
+  updateTrackSortUI();
   renderTrackList();
   updateHeroPlayIcon();
   updatePlaylistFavoriteUI();
@@ -940,7 +1083,7 @@ function renderTrackList(query = ""){
   const isCustomPlaylistView = Boolean(getCustomPlaylistRecord(state.activePlaylistId));
   const isManagedPlaylistView = isLikedSongsView || isCustomPlaylistView;
   const safePlaylistName = escapeHtml(playlist.name);
-  const matchingTracks = playlist.trackIndices
+  let matchingTracks = playlist.trackIndices
     .map((trackIndex, position) => ({
       track: tracks[trackIndex],
       trackIndex,
@@ -950,6 +1093,8 @@ function renderTrackList(query = ""){
       const searchableText = `${track.title} ${track.artist} ${playlist.name}`.toLowerCase();
       return searchableText.includes(normalizedQuery);
     });
+
+  matchingTracks = sortTrackEntries(matchingTracks, getActivePlaylistSort());
 
   if (matchingTracks.length === 0){
     let emptyMessage = "No songs found";
@@ -972,10 +1117,10 @@ function renderTrackList(query = ""){
     return;
   }
 
-  trackListEl.innerHTML = matchingTracks.map(({ track: t, trackIndex, position }) => `
+  trackListEl.innerHTML = matchingTracks.map(({ track: t, trackIndex }, displayPosition) => `
     <div class="track-row" data-index="${trackIndex}">
       <span class="col-index">
-        <span class="idx-num">${position + 1}</span>
+        <span class="idx-num">${displayPosition + 1}</span>
         <span class="eq"><span></span><span></span><span></span><span></span></span>
       </span>
       <span class="col-title">
@@ -1047,15 +1192,40 @@ function updateActiveRow(){
 
 // Quietly load each track's metadata so the list can show real durations
 function preloadDurations(){
+  let settledMetadataCount = 0;
+
+  const finishMetadataProbe = () => {
+    settledMetadataCount += 1;
+    if (settledMetadataCount !== tracks.length) return;
+
+    if (getActivePlaylistSort().startsWith("duration-")){
+      renderTrackList(searchInput?.value || "");
+    }
+
+    if (getPlaylistSort(state.playingPlaylistId).startsWith("duration-")){
+      updateNowPlayingPanel();
+    }
+  };
+
   tracks.forEach((t, i) => {
     const probe = new Audio();
+    let probeIsFinished = false;
+
+    const finishProbeOnce = () => {
+      if (probeIsFinished) return;
+      probeIsFinished = true;
+      finishMetadataProbe();
+    };
+
     probe.preload = "metadata";
     probe.src = t.src;
     probe.addEventListener('loadedmetadata', () => {
       t.duration = probe.duration;
       const cell = trackListEl.querySelector(`[data-duration-for="${i}"]`);
       if (cell) cell.textContent = formatTime(t.duration);
+      finishProbeOnce();
     });
+    probe.addEventListener('error', finishProbeOnce);
   });
 }
 
@@ -1087,17 +1257,17 @@ function togglePlay(){
 }
 
 function playActivePlaylist(){
-  const playlist = getPlaylist();
-  if (playlist.trackIndices.length === 0) return;
+  const trackIndices = getSortedPlaylistTrackIndices();
+  if (trackIndices.length === 0) return;
   const selectedPlaylistIsLoaded = state.activePlaylistId === state.playingPlaylistId;
 
-  if (selectedPlaylistIsLoaded && playlist.trackIndices.includes(state.currentIndex)){
+  if (selectedPlaylistIsLoaded && trackIndices.includes(state.currentIndex)){
     togglePlay();
     return;
   }
 
   state.playingPlaylistId = state.activePlaylistId;
-  loadTrack(playlist.trackIndices[0], true);
+  loadTrack(trackIndices[0], true);
 }
 
 function playNext(){
@@ -1114,7 +1284,7 @@ function playPrev(){
     audio.currentTime = 0;
     return;
   }
-  const indices = getPlaylist(state.playingPlaylistId).trackIndices;
+  const indices = getSortedPlaylistTrackIndices(state.playingPlaylistId);
   if (indices.length === 0) return;
   const currentPosition = indices.indexOf(state.currentIndex);
   const previousPosition = currentPosition <= 0 ? indices.length - 1 : currentPosition - 1;
@@ -1188,6 +1358,7 @@ playlistMoreBtn.addEventListener('click', event => {
   event.preventDefault();
   event.stopPropagation();
   const shouldOpen = playlistActionsMenu.hidden;
+  closeTrackSortMenu();
   closePlaylistActionsMenu();
 
   if (shouldOpen){
@@ -1213,6 +1384,34 @@ deletePlaylistAction.addEventListener('click', event => {
 document.addEventListener('click', event => {
   if (!event.target.closest?.('.playlist-actions-menu-wrap')){
     closePlaylistActionsMenu();
+  }
+});
+
+trackSortBtn.addEventListener('click', event => {
+  event.preventDefault();
+  event.stopPropagation();
+  const shouldOpen = trackSortMenu.hidden;
+  closePlaylistActionsMenu();
+  closeTrackSortMenu();
+
+  if (shouldOpen){
+    trackSortMenu.hidden = false;
+    trackSortBtn.setAttribute('aria-expanded', 'true');
+  }
+});
+
+trackSortMenu.addEventListener('click', event => {
+  const option = event.target.closest?.('[data-sort-key]');
+  if (!option) return;
+
+  event.stopPropagation();
+  setPlaylistSort(option.dataset.sortKey);
+  closeTrackSortMenu();
+});
+
+document.addEventListener('click', event => {
+  if (!event.target.closest?.('.track-sort-wrap')){
+    closeTrackSortMenu();
   }
 });
 
@@ -1261,6 +1460,7 @@ document.addEventListener('keydown', event => {
   }
 
   closePlaylistActionsMenu();
+  closeTrackSortMenu();
 });
 
 searchInput?.addEventListener('input', () => {
@@ -1314,6 +1514,13 @@ window.addEventListener('storage', event => {
   if (event.key === FAVORITE_PLAYLISTS_STORAGE_KEY){
     state.favoritePlaylists = readFavoritePlaylists();
     updatePlaylistFavoriteUI();
+  }
+
+  if (event.key === PLAYLIST_SORT_STORAGE_KEY){
+    state.playlistSorts = readPlaylistSorts();
+    updateTrackSortUI();
+    renderTrackList(searchInput?.value || "");
+    updateNowPlayingPanel();
   }
 
   if (event.key === CUSTOM_PLAYLISTS_STORAGE_KEY){
