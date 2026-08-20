@@ -384,6 +384,11 @@ const nowPlayingPlaylist = document.getElementById('now-playing-playlist');
 const artistCardName = document.getElementById('artist-card-name');
 const panelLikeBtn = document.getElementById('panel-like-btn');
 const queueList = document.getElementById('queue-list');
+const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
+const nowPlayingToggleBtn = document.getElementById('now-playing-toggle-btn');
+const nowPlayingCloseBtn = document.getElementById('now-playing-close-btn');
+const responsiveBackdrop = document.getElementById('responsive-backdrop');
 
 // ============ Helpers ============
 function formatTime(seconds){
@@ -397,6 +402,76 @@ function setPercent(el, fillEl, handleEl, percent){
   const pct = Math.min(100, Math.max(0, percent));
   fillEl.style.width = pct + "%";
   handleEl.style.left = pct + "%";
+}
+
+// MUSICOZY STEP 11 — RESPONSIVE DRAWERS
+function syncResponsiveBackdrop(){
+  if (!responsiveBackdrop) return;
+
+  const hasOpenDrawer = document.body.classList.contains('sidebar-drawer-open')
+    || document.body.classList.contains('now-playing-drawer-open');
+
+  responsiveBackdrop.hidden = !hasOpenDrawer;
+}
+
+function closeSidebarDrawer(restoreFocus = false){
+  const wasOpen = document.body.classList.contains('sidebar-drawer-open');
+  document.body.classList.remove('sidebar-drawer-open');
+  sidebarToggleBtn?.setAttribute('aria-expanded', 'false');
+  sidebarToggleBtn?.setAttribute('aria-label', 'Open library');
+  syncResponsiveBackdrop();
+
+  if (restoreFocus && wasOpen) sidebarToggleBtn?.focus();
+}
+
+function closeNowPlayingDrawer(restoreFocus = false){
+  const wasOpen = document.body.classList.contains('now-playing-drawer-open');
+  document.body.classList.remove('now-playing-drawer-open');
+  nowPlayingToggleBtn?.setAttribute('aria-expanded', 'false');
+  nowPlayingToggleBtn?.setAttribute('aria-label', 'Open Now Playing');
+  syncResponsiveBackdrop();
+
+  if (restoreFocus && wasOpen) nowPlayingToggleBtn?.focus();
+}
+
+function openSidebarDrawer(){
+  closeNowPlayingDrawer();
+  closePlaylistActionsMenu();
+  closeTrackSortMenu();
+  document.body.classList.add('sidebar-drawer-open');
+  sidebarToggleBtn?.setAttribute('aria-expanded', 'true');
+  sidebarToggleBtn?.setAttribute('aria-label', 'Close library');
+  syncResponsiveBackdrop();
+  window.setTimeout(() => sidebarCloseBtn?.focus(), 0);
+}
+
+function openNowPlayingDrawer(){
+  closeSidebarDrawer();
+  closePlaylistActionsMenu();
+  closeTrackSortMenu();
+  document.body.classList.add('now-playing-drawer-open');
+  nowPlayingToggleBtn?.setAttribute('aria-expanded', 'true');
+  nowPlayingToggleBtn?.setAttribute('aria-label', 'Close Now Playing');
+  syncResponsiveBackdrop();
+  window.setTimeout(() => nowPlayingCloseBtn?.focus(), 0);
+}
+
+function closeResponsiveDrawers(restoreFocus = false){
+  const sidebarWasOpen = document.body.classList.contains('sidebar-drawer-open');
+  const nowPlayingWasOpen = document.body.classList.contains('now-playing-drawer-open');
+
+  closeSidebarDrawer(false);
+  closeNowPlayingDrawer(false);
+
+  if (restoreFocus){
+    if (sidebarWasOpen) sidebarToggleBtn?.focus();
+    else if (nowPlayingWasOpen) nowPlayingToggleBtn?.focus();
+  }
+}
+
+function handleResponsiveResize(){
+  if (window.innerWidth > 760) closeSidebarDrawer();
+  if (window.innerWidth > 1180) closeNowPlayingDrawer();
 }
 
 function getPlaylist(playlistId = state.activePlaylistId){
@@ -1339,6 +1414,26 @@ prevBtn.addEventListener('click', playPrev);
 replay10Btn?.addEventListener('click', () => seekBy(-10));
 forward10Btn?.addEventListener('click', () => seekBy(10));
 
+sidebarToggleBtn?.addEventListener('click', () => {
+  if (document.body.classList.contains('sidebar-drawer-open')){
+    closeSidebarDrawer(true);
+  } else {
+    openSidebarDrawer();
+  }
+});
+sidebarCloseBtn?.addEventListener('click', () => closeSidebarDrawer(true));
+
+nowPlayingToggleBtn?.addEventListener('click', () => {
+  if (document.body.classList.contains('now-playing-drawer-open')){
+    closeNowPlayingDrawer(true);
+  } else {
+    openNowPlayingDrawer();
+  }
+});
+nowPlayingCloseBtn?.addEventListener('click', () => closeNowPlayingDrawer(true));
+responsiveBackdrop?.addEventListener('click', () => closeResponsiveDrawers(true));
+window.addEventListener('resize', handleResponsiveResize);
+
 playlistsEl.addEventListener('click', event => {
   const item = event.target.closest?.('.playlist-item[data-playlist-id]');
   if (!item) return;
@@ -1346,10 +1441,14 @@ playlistsEl.addEventListener('click', event => {
   event.preventDefault();
   closePlaylistActionsMenu();
   const playlistId = item.dataset.playlistId;
-  if (!getPlaylist(playlistId) || playlistId === state.activePlaylistId) return;
+  if (!getPlaylist(playlistId)) return;
 
-  state.activePlaylistId = playlistId;
-  updatePlaylistView();
+  if (playlistId !== state.activePlaylistId){
+    state.activePlaylistId = playlistId;
+    updatePlaylistView();
+  }
+
+  closeSidebarDrawer();
 });
 
 playlistFavoriteBtn.addEventListener('click', toggleActivePlaylistFavorite);
@@ -1456,6 +1555,12 @@ document.addEventListener('keydown', event => {
 
   if (!playlistModal.hidden){
     closePlaylistModal();
+    return;
+  }
+
+  if (document.body.classList.contains('sidebar-drawer-open')
+    || document.body.classList.contains('now-playing-drawer-open')){
+    closeResponsiveDrawers(true);
     return;
   }
 
