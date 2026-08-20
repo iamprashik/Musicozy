@@ -1,3 +1,4 @@
+<!-- MUSICOZY STEP 10 — PER-PLAYLIST SONG SORTING -->
 <!-- MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK -->
 <!-- MUSICOZY STEP 8 — PLAYLIST FAVORITES AND MAIN ACTION MENU -->
 <!-- MUSICOZY STEP 7 — RENAME AND DELETE CUSTOM PLAYLISTS -->
@@ -154,6 +155,45 @@
           data-tooltip="Clear history"
           hidden
         ><span class="material-symbols-rounded">delete_sweep</span></button>
+      </div>
+
+      <div class="track-toolbar">
+        <div class="track-sort-wrap">
+          <button
+            class="track-sort-btn"
+            id="track-sort-btn"
+            type="button"
+            aria-label="Sort songs"
+            aria-haspopup="menu"
+            aria-expanded="false"
+          >
+            <span class="material-symbols-rounded">swap_vert</span>
+            <span id="track-sort-current">Custom order</span>
+            <span class="material-symbols-rounded track-sort-chevron">expand_more</span>
+          </button>
+          <div class="track-sort-menu" id="track-sort-menu" role="menu" aria-label="Sort songs" hidden>
+            <button type="button" role="menuitemradio" data-sort-key="order" aria-checked="true">
+              <span>Custom order</span>
+              <span class="material-symbols-rounded sort-option-check">check</span>
+            </button>
+            <button type="button" role="menuitemradio" data-sort-key="title-asc" aria-checked="false">
+              <span>Title A–Z</span>
+              <span class="material-symbols-rounded sort-option-check">check</span>
+            </button>
+            <button type="button" role="menuitemradio" data-sort-key="artist-asc" aria-checked="false">
+              <span>Artist A–Z</span>
+              <span class="material-symbols-rounded sort-option-check">check</span>
+            </button>
+            <button type="button" role="menuitemradio" data-sort-key="duration-asc" aria-checked="false">
+              <span>Shortest duration</span>
+              <span class="material-symbols-rounded sort-option-check">check</span>
+            </button>
+            <button type="button" role="menuitemradio" data-sort-key="duration-desc" aria-checked="false">
+              <span>Longest duration</span>
+              <span class="material-symbols-rounded sort-option-check">check</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <section class="track-table">
