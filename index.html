@@ -1,3 +1,6 @@
+<!-- MUSICOZY STEP 14 — KEYBOARD CONTROLS AND ACCESSIBILITY -->
+<!-- MUSICOZY STEP 13 — SAVED PLAYBACK SESSION -->
+<!-- MUSICOZY STEP 12 — RELIABLE AUDIO LOADING AND RECOVERY -->
 <!-- MUSICOZY STEP 11 — RESPONSIVE TABLET AND MOBILE LAYOUT -->
 <!-- MUSICOZY STEP 10 — PER-PLAYLIST SONG SORTING -->
 <!-- MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK -->
@@ -281,24 +284,36 @@
       <p class="np-title" id="bar-title">—</p>
       <p class="np-artist" id="bar-artist">—</p>
     </div>
-    <button class="icon-btn like-btn" id="like-btn" aria-label="Like song">
+    <button class="icon-btn like-btn" id="like-btn" type="button" aria-label="Like song">
       <span class="material-symbols-rounded">favorite</span>
     </button>
   </div>
 
   <div class="player-controls">
     <div class="control-buttons">
-      <button class="icon-btn" id="replay-10-btn" aria-label="Replay 10 seconds"><span class="material-symbols-rounded">replay_10</span></button>
-      <button class="icon-btn" id="prev-btn" aria-label="Previous"><span class="material-symbols-rounded">skip_previous</span></button>
-      <button class="icon-btn play-btn" id="play-btn" aria-label="Play">
+      <button class="icon-btn" id="replay-10-btn" type="button" aria-label="Replay 10 seconds" aria-keyshortcuts="ArrowLeft"><span class="material-symbols-rounded">replay_10</span></button>
+      <button class="icon-btn" id="prev-btn" type="button" aria-label="Previous" aria-keyshortcuts="P"><span class="material-symbols-rounded">skip_previous</span></button>
+      <button class="icon-btn play-btn" id="play-btn" type="button" aria-label="Play" aria-keyshortcuts="Space">
         <span class="material-symbols-rounded" id="play-icon">play_arrow</span>
       </button>
-      <button class="icon-btn" id="next-btn" aria-label="Next"><span class="material-symbols-rounded">skip_next</span></button>
-      <button class="icon-btn" id="forward-10-btn" aria-label="Forward 10 seconds"><span class="material-symbols-rounded">forward_10</span></button>
+      <button class="icon-btn" id="next-btn" type="button" aria-label="Next" aria-keyshortcuts="N"><span class="material-symbols-rounded">skip_next</span></button>
+      <button class="icon-btn" id="forward-10-btn" type="button" aria-label="Forward 10 seconds" aria-keyshortcuts="ArrowRight"><span class="material-symbols-rounded">forward_10</span></button>
     </div>
     <div class="progress-row">
       <span class="time-current" id="time-current">0:00</span>
-      <div class="progress-track" id="progress-track">
+      <div
+        class="progress-track"
+        id="progress-track"
+        role="slider"
+        tabindex="-1"
+        aria-label="Song progress"
+        aria-orientation="horizontal"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        aria-valuetext="0:00 of 0:00"
+        aria-disabled="true"
+      >
         <div class="progress-fill" id="progress-fill"></div>
         <div class="progress-handle" id="progress-handle"></div>
       </div>
@@ -315,13 +330,40 @@
       aria-controls="now-playing-panel"
       aria-expanded="false"
     ><span class="material-symbols-rounded">queue_music</span></button>
-    <span class="vol-icon material-symbols-rounded">volume_up</span>
-    <div class="volume-track" id="volume-track">
+    <button
+      class="vol-icon volume-btn material-symbols-rounded"
+      id="volume-btn"
+      type="button"
+      aria-label="Mute"
+      aria-keyshortcuts="M"
+      aria-pressed="false"
+    >volume_up</button>
+    <div
+      class="volume-track"
+      id="volume-track"
+      role="slider"
+      tabindex="0"
+      aria-label="Volume"
+      aria-orientation="horizontal"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="75"
+      aria-valuetext="75 percent"
+    >
       <div class="volume-fill" id="volume-fill"></div>
       <div class="volume-handle" id="volume-handle"></div>
     </div>
   </div>
 </footer>
+
+<!-- PLAYBACK LOADING AND ERROR MESSAGE -->
+<div class="playback-status" id="playback-status" role="status" aria-live="polite" aria-atomic="true" hidden>
+  <span class="material-symbols-rounded playback-status-icon" id="playback-status-icon">warning</span>
+  <span class="playback-status-message" id="playback-status-message"></span>
+  <button class="playback-status-close" id="playback-status-close" type="button" aria-label="Dismiss playback message">
+    <span class="material-symbols-rounded">close</span>
+  </button>
+</div>
 
 <!-- CREATE PLAYLIST DIALOG -->
 <div class="playlist-modal" id="playlist-modal" hidden>
@@ -401,7 +443,7 @@
   <button class="playlist-toast-change" id="playlist-toast-change" type="button">Change</button>
 </div>
 
-<audio id="audio"></audio>
+<audio id="audio" preload="metadata"></audio>
 <div id="cursor-tooltip" class="cursor-tooltip"></div>
 
 <script src="script.js"></script>
