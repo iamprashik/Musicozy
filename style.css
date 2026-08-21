@@ -1,3 +1,10 @@
+/* ================================================================
+   MUSICOZY STYLESHEET
+   Sections follow the visual order of the page so each component is
+   easy to find and edit. Responsive overrides are grouped at the end.
+   ================================================================ */
+
+/* ======================== DESIGN TOKENS ======================== */
 :root{
   --bg: #000000;
   --panel-bg: #121212;
@@ -28,6 +35,7 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
+/* ======================== BASE STYLES ======================== */
 *{ box-sizing: border-box; margin:0; padding:0; }
 
 .material-symbols-rounded{
@@ -39,7 +47,7 @@
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }
-/* filled state — used for active likes */
+/* Filled Material Symbol state used by active Like/Favorite buttons. */
 .like-btn.is-liked .material-symbols-rounded,
 .panel-like-btn.is-liked .material-symbols-rounded,
 .round-btn.ghost.is-liked .material-symbols-rounded{
@@ -60,14 +68,14 @@ img{ display:block; max-width:100%; }
 
 ::selection{ background: var(--amber-dim); color: var(--text); }
 
-/* focus visibility */
+/* Shared keyboard focus indicator. */
 button:focus-visible, a:focus-visible{
   outline: 2px solid var(--amber);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ============ Tooltips ============ */
+/* ======================== TOOLTIPS ======================== */
 .has-tooltip{ position: relative; }
 
 .cursor-tooltip{
@@ -94,8 +102,11 @@ button:focus-visible, a:focus-visible{
   color: #ffffff;
   transform: translateX(-50%);
 }
+.cursor-tooltip.is-top{
+  transform: translate(-50%, -100%);
+}
 
-/* ============ App layout ============ */
+/* ======================== APPLICATION LAYOUT ======================== */
 .app{
   display:grid;
   grid-template-columns: 330px minmax(0, 1fr) 320px;
@@ -106,7 +117,7 @@ button:focus-visible, a:focus-visible{
   padding-right: 6px;
 }
 
-/* ============ Sidebar ============ */
+/* ======================== SIDEBAR ======================== */
 .sidebar{
   grid-column: 1;
   grid-row: 1 / 3;
@@ -272,7 +283,7 @@ button:focus-visible, a:focus-visible{
   font-variation-settings:'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
 
-/* ============ Create playlist dialog ============ */
+/* ======================== CREATE/RENAME PLAYLIST DIALOG ======================== */
 .playlist-modal{
   position:fixed;
   inset:0;
@@ -398,7 +409,7 @@ button:focus-visible, a:focus-visible{
 }
 .dialog-btn-primary:hover{ background:var(--amber-bright); }
 
-/* ============ Add-to-playlist dialog ============ */
+/* ======================== ADD-TO-PLAYLIST DIALOG ======================== */
 .add-to-playlist-dialog{
   max-height:min(620px, 86vh);
   display:flex;
@@ -473,7 +484,7 @@ button:focus-visible, a:focus-visible{
   text-align:center;
 }
 
-/* ============ Added-to-playlist toast ============ */
+/* ======================== PLAYLIST CONFIRMATION TOAST ======================== */
 .playlist-toast{
   position:fixed;
   left:50%;
@@ -513,7 +524,7 @@ button:focus-visible, a:focus-visible{
 }
 .playlist-toast-change:hover{ text-decoration:underline; }
 
-/* ============ Playback status ============ */
+/* ======================== PLAYBACK STATUS MESSAGE ======================== */
 .playback-status{
   position:fixed;
   left:50%;
@@ -565,7 +576,7 @@ button:focus-visible, a:focus-visible{
   background:var(--surface-hover);
 }
 
-/* ============ Main ============ */
+/* ======================== MAIN CONTENT SHELL ======================== */
 .main{
   grid-column: 2;
   grid-row: 2;
@@ -580,13 +591,26 @@ button:focus-visible, a:focus-visible{
 
 .main-content{
   flex: 1;
+  min-width:0;
   min-height: 0;
-  padding: 32px 40px 40px;
+  display:flex;
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  overflow:hidden;
+}
+
+.main-content-scroll{
+  flex:1;
+  min-width:0;
+  min-height:0;
+  padding:32px 40px 40px;
   overflow-y: auto;
+  overflow-x:hidden;
   scrollbar-gutter: stable;
+  scrollbar-width:auto;
+  scrollbar-color:var(--surface-raised) transparent;
+  overscroll-behavior:contain;
 }
 
 .main-header{
@@ -601,7 +625,7 @@ button:focus-visible, a:focus-visible{
   padding: 10px 0 14px;
 }
 
-/* ============ Now Playing panel ============ */
+/* ======================== NOW PLAYING PANEL ======================== */
 .now-playing-panel{
   grid-column: 3;
   grid-row: 2;
@@ -798,6 +822,7 @@ button:focus-visible, a:focus-visible{
   text-align:center;
 }
 
+/* ======================== TOP NAVBAR ======================== */
 .main-nav-zone{
   grid-column: 1;
   display:grid;
@@ -1024,7 +1049,7 @@ button:focus-visible, a:focus-visible{
   font-size: 13px;
 }
 
-/* ---- Hero ---- */
+/* ======================== PLAYLIST HERO ======================== */
 .hero{
   display:flex;
   align-items:flex-end;
@@ -1063,7 +1088,7 @@ button:focus-visible, a:focus-visible{
   line-height: 1.5;
 }
 
-/* ---- Action row ---- */
+/* ======================== PLAYLIST ACTIONS ======================== */
 .action-row{
   display:flex;
   align-items:center;
@@ -1129,7 +1154,7 @@ button:focus-visible, a:focus-visible{
   transform:none;
 }
 
-/* ---- Playlist sorting ---- */
+/* ======================== PLAYLIST SORTING ======================== */
 .track-toolbar{
   display:flex;
   justify-content:flex-end;
@@ -1196,7 +1221,7 @@ button:focus-visible, a:focus-visible{
 }
 .track-sort-menu button.is-selected .sort-option-check{ opacity:1; }
 
-/* ---- Track table ---- */
+/* ======================== TRACK TABLE ======================== */
 .track-table{ padding-bottom: 8px; }
 
 .track-row{
@@ -1259,7 +1284,6 @@ button:focus-visible, a:focus-visible{
   overflow:hidden;
   text-overflow:ellipsis;
 }
-/* MUSICOZY STEP 6C — LIKED SONGS GREEN TICK */
 .t-artist{
   font-size: 12.5px;
   color: var(--text-muted);
@@ -1330,7 +1354,7 @@ button:focus-visible, a:focus-visible{
   text-align:right;
 }
 
-/* equalizer signature element */
+/* Animated equalizer shown beside the active song. */
 .eq{
   display:none;
   align-items:flex-end;
@@ -1357,7 +1381,7 @@ button:focus-visible, a:focus-visible{
   50% { height: 14px; }
 }
 
-/* ============ Bottom Player Bar ============ */
+/* ======================== BOTTOM PLAYER ======================== */
 .player-bar{
   height: 90px;
   background: var(--bg);
@@ -1546,7 +1570,7 @@ button:focus-visible, a:focus-visible{
 .volume-track:hover .volume-handle{ opacity:1; }
 .volume-track:hover .volume-fill{ background: var(--amber); }
 
-/* Responsive controls stay out of the desktop layout. */
+/* Drawer buttons stay hidden until their responsive breakpoints. */
 .responsive-icon-btn,
 .drawer-close-btn,
 .responsive-now-playing-toggle{
@@ -1582,15 +1606,23 @@ button:focus-visible, a:focus-visible{
 }
 .responsive-backdrop[hidden]{ display:none; }
 
-/* ============ Scrollbar ============ */
-.main-content::-webkit-scrollbar{ width: 10px; }
-.main-content::-webkit-scrollbar-thumb{ background: var(--surface-raised); border-radius: 6px; }
-.main-content::-webkit-scrollbar-track{ background: transparent; }
+/* ======================== SCROLLBARS ======================== */
+.main-content-scroll::-webkit-scrollbar{ width:10px; }
+.main-content-scroll::-webkit-scrollbar-thumb{
+  background:var(--surface-raised);
+  background-clip:padding-box;
+  border:2px solid transparent;
+  border-radius:999px;
+}
+.main-content-scroll::-webkit-scrollbar-track{
+  background:transparent;
+  margin-block:14px;
+}
 .now-playing-box::-webkit-scrollbar{ width: 8px; }
 .now-playing-box::-webkit-scrollbar-thumb{ background: var(--surface-raised); border-radius: 6px; }
 .now-playing-box::-webkit-scrollbar-track{ background: transparent; }
 
-/* ============ Responsive ============ */
+/* ======================== RESPONSIVE LAYOUT ======================== */
 /* Tablet: keep the library visible and turn Now Playing into a drawer. */
 @media (max-width: 1180px){
   body{ overflow:hidden; }
@@ -1603,8 +1635,6 @@ button:focus-visible, a:focus-visible{
   }
 
   .sidebar{
-    grid-column:1;
-    grid-row:1 / 3;
     padding:8px 0 6px 10px;
   }
   .brand{
@@ -1628,7 +1658,6 @@ button:focus-visible, a:focus-visible{
 
   .main-header{
     grid-column:2;
-    grid-row:1;
     grid-template-columns:minmax(0, 1fr);
     height:70px;
     padding:8px 0 12px;
@@ -1654,11 +1683,7 @@ button:focus-visible, a:focus-visible{
   .main-nav-zone .premium-btn,
   .now-playing-nav-zone{ display:none; }
 
-  .main{
-    grid-column:2;
-    grid-row:2;
-  }
-  .main-content{ padding:28px 28px 36px; }
+  .main-content-scroll{ padding:28px 28px 36px; }
 
   .col-album{ display:none; }
   .track-row{ grid-template-columns:34px minmax(0, 1fr) 38px 60px; }
@@ -1682,7 +1707,6 @@ button:focus-visible, a:focus-visible{
     transform:translate(-50%, 0);
   }
   .now-playing-box{
-    height:100%;
     border-radius:20px 20px 0 0;
     box-shadow:0 -22px 60px rgba(0,0,0,.58);
   }
@@ -1692,7 +1716,6 @@ button:focus-visible, a:focus-visible{
     position:fixed;
     left:0;
     right:0;
-    bottom:0;
     z-index:100;
     height:86px;
     grid-template-columns:minmax(180px, 1fr) minmax(300px, 1.6fr) auto;
@@ -1719,7 +1742,7 @@ button:focus-visible, a:focus-visible{
 @media (max-width: 960px) and (min-width: 761px){
   .app{ grid-template-columns:230px minmax(0, 1fr); }
   .sidebar-box{ padding:13px; }
-  .main-content{ padding:24px 22px 32px; }
+  .main-content-scroll{ padding:24px 22px 32px; }
   .hero-art{ width:150px; height:150px; }
   .hero{ gap:20px; }
   .hero-title{ font-size:clamp(32px, 5vw, 44px); }
@@ -1756,7 +1779,6 @@ button:focus-visible, a:focus-visible{
     width:min(320px, 88vw);
     height:auto;
     padding:10px;
-    background:var(--bg);
     visibility:hidden;
     pointer-events:none;
     transform:translateX(-105%);
@@ -1775,7 +1797,6 @@ button:focus-visible, a:focus-visible{
 
   .main-header{
     grid-column:1;
-    grid-row:1;
     height:64px;
     padding:8px;
   }
@@ -1786,8 +1807,6 @@ button:focus-visible, a:focus-visible{
   }
   .mobile-sidebar-toggle{ display:flex; }
   .main-nav-center > .round-btn{
-    width:44px;
-    height:44px;
     font-size:24px;
   }
   .search-bar{
@@ -1800,15 +1819,11 @@ button:focus-visible, a:focus-visible{
 
   .main{
     grid-column:1;
-    grid-row:2;
-    height:100%;
     padding:0 8px 8px;
   }
-  .main-content{
+  .main-content-scroll{
     padding:22px 16px 28px;
-    overflow-y:auto;
     scrollbar-gutter:auto;
-    overscroll-behavior:contain;
   }
 
   .hero{
@@ -1856,8 +1871,6 @@ button:focus-visible, a:focus-visible{
     width:calc(100vw - 16px);
     height:min(720px, calc(100dvh - 124px));
   }
-  .now-playing-box{ padding:18px; }
-
   .player-bar{
     height:108px;
     grid-template-columns:minmax(0, 1fr) 48px;
@@ -1931,7 +1944,7 @@ button:focus-visible, a:focus-visible{
   .search-divider,
   .browse-btn{ display:none; }
 
-  .main-content{ padding:16px 12px 24px; }
+  .main-content-scroll{ padding:16px 12px 24px; }
   .hero{
     display:grid;
     grid-template-columns:100px minmax(0, 1fr);
