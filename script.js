@@ -1,8 +1,16 @@
+// ================================================================
+// MUSICOZY APPLICATION LOGIC
+// Sections follow the app's data flow: data, storage, state, UI,
+// playback, events and initialization.
+// ================================================================
+
+// ======================== TRACK DATA ========================
+// CC0 synthwave tracks from OpenGameArt + placeholder artwork.
+// Source pages and artist credits are included with every track below.
 const tracks = [
   {
     title: "Synth Wave by Alex",
     artist: "Alex McCulloch",
-    album: "Late Night Drive",
     cover: "https://picsum.photos/seed/synthwavealex/300/300",
     src: "https://opengameart.org/sites/default/files/80s_song_mastered_0.mp3",
     license: "CC0",
@@ -11,7 +19,6 @@ const tracks = [
   {
     title: "Nighttime Solitude",
     artist: "celestialghost8",
-    album: "Late Night Drive",
     cover: "https://picsum.photos/seed/nighttimesolitude/300/300",
     src: "https://opengameart.org/sites/default/files/Nighttime%20Solitude%20%5BCC0%5D.mp3",
     license: "CC0",
@@ -20,7 +27,6 @@ const tracks = [
   {
     title: "Synthwave 421k",
     artist: "The Cynic Project",
-    album: "Late Night Drive",
     cover: "https://picsum.photos/seed/synthwave421k/300/300",
     src: "https://opengameart.org/sites/default/files/007_Synthwave_421k.mp3",
     license: "CC0",
@@ -29,7 +35,6 @@ const tracks = [
   {
     title: "Synthwave 4k",
     artist: "The Cynic Project",
-    album: "Late Night Drive",
     cover: "https://picsum.photos/seed/synthwave4k/300/300",
     src: "https://opengameart.org/sites/default/files/001_Synthwave_4k_0.mp3",
     license: "CC0",
@@ -38,7 +43,6 @@ const tracks = [
   {
     title: "Synthwave 15k",
     artist: "The Cynic Project",
-    album: "Late Night Drive",
     cover: "https://picsum.photos/seed/synthwave15k/300/300",
     src: "https://opengameart.org/sites/default/files/002_Synthwave_15k.mp3",
     license: "CC0",
@@ -47,7 +51,6 @@ const tracks = [
   {
     title: "Synth Wave",
     artist: "Alex McCulloch",
-    album: "Late Night Drive",
     cover: "https://picsum.photos/seed/synthwaveretro/300/300",
     src: "https://opengameart.org/sites/default/files/Synth%20Wave_0.mp3",
     license: "CC0",
@@ -55,7 +58,7 @@ const tracks = [
   }
 ];
 
-// ============ Playlist data ============
+// ======================== PLAYLIST DATA ========================
 // The playlists currently reuse the verified CC0 tracks in different orders.
 const playlists = {
   "liked-songs": {
@@ -96,7 +99,8 @@ const playlists = {
   }
 };
 
-// ============ Saved liked songs ============
+// ======================== LOCAL STORAGE ========================
+// --- Liked songs ---
 const LIKED_SONGS_STORAGE_KEY = "musicozy-liked-songs-v1";
 
 function readSavedLikedSongs(){
@@ -131,7 +135,7 @@ function saveLikedSongs(){
   }
 }
 
-// ============ Saved listening history ============
+// --- Recently played history ---
 const RECENTLY_PLAYED_STORAGE_KEY = "musicozy-recently-played-v1";
 const RECENTLY_PLAYED_LIMIT = 20;
 
@@ -167,7 +171,7 @@ function saveRecentlyPlayed(){
   }
 }
 
-// ============ Saved custom playlists ============
+// --- Custom playlists ---
 const CUSTOM_PLAYLISTS_STORAGE_KEY = "musicozy-custom-playlists-v1";
 
 function readCustomPlaylists(){
@@ -223,7 +227,7 @@ function saveCustomPlaylists(){
   }
 }
 
-// ============ Saved favorite playlists ============
+// --- Favorite playlists ---
 const FAVORITE_PLAYLISTS_STORAGE_KEY = "musicozy-favorite-playlists-v1";
 
 function readFavoritePlaylists(){
@@ -257,7 +261,7 @@ function saveFavoritePlaylists(){
   }
 }
 
-// ============ Saved playlist sorting ============
+// --- Per-playlist sorting ---
 const PLAYLIST_SORT_STORAGE_KEY = "musicozy-playlist-sorts-v1";
 const PLAYLIST_SORT_OPTIONS = {
   order: "Custom order",
@@ -299,7 +303,7 @@ function savePlaylistSorts(){
   }
 }
 
-// ============ Saved playback session ============
+// --- Playback session ---
 const PLAYBACK_SESSION_STORAGE_KEY = "musicozy-playback-session-v1";
 const DEFAULT_PLAYLIST_ID = "late-night-drive";
 const DEFAULT_VOLUME = 0.75;
@@ -329,8 +333,7 @@ function readPlaybackSession(){
         : 0,
       volume: Number.isFinite(savedSession.volume)
         ? Math.min(1, Math.max(0, savedSession.volume))
-        : DEFAULT_VOLUME,
-      wasPlaying: savedSession.wasPlaying === true
+        : DEFAULT_VOLUME
     };
   } catch (error) {
     console.warn("Musicozy could not read the playback session:", error);
@@ -338,7 +341,7 @@ function readPlaybackSession(){
   }
 }
 
-// ============ State ============
+// ======================== APPLICATION STATE ========================
 const state = {
   currentIndex: 0,
   activePlaylistId: DEFAULT_PLAYLIST_ID,
@@ -356,7 +359,8 @@ const state = {
   playlistSorts: readPlaylistSorts()
 };
 
-// ============ DOM refs ============
+// ======================== DOM REFERENCES ========================
+// Core media, search and library elements.
 const audio = document.getElementById('audio');
 const trackListEl = document.getElementById('track-list');
 const searchInput = document.getElementById('search-input') || document.querySelector('.search-input');
@@ -377,19 +381,24 @@ const playlistDestinationList = document.getElementById('playlist-destination-li
 const playlistToast = document.getElementById('playlist-toast');
 const playlistToastMessage = document.getElementById('playlist-toast-message');
 const playlistToastChange = document.getElementById('playlist-toast-change');
+
+// Temporary playlist-dialog state.
 let destinationTrackIndex = null;
 let playlistToastTimer = null;
 let editingPlaylistId = null;
 
+// Playlist hero.
 const heroArt = document.getElementById('hero-art');
 const heroTitle = document.getElementById('hero-title');
 const heroMeta = document.getElementById('hero-meta');
 
+// Bottom-player song details.
 const barArt = document.getElementById('bar-art');
 const barTitle = document.getElementById('bar-title');
 const barArtist = document.getElementById('bar-artist');
 const likeBtn = document.getElementById('like-btn');
 
+// Playback, playlist-action and sorting controls.
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
 const heroPlayBtn = document.getElementById('hero-play');
@@ -408,12 +417,14 @@ const nextBtn = document.getElementById('next-btn');
 const replay10Btn = document.getElementById('replay-10-btn');
 const forward10Btn = document.getElementById('forward-10-btn');
 
+// Progress controls.
 const timeCurrent = document.getElementById('time-current');
 const timeDuration = document.getElementById('time-duration');
 const progressTrack = document.getElementById('progress-track');
 const progressFill = document.getElementById('progress-fill');
 const progressHandle = document.getElementById('progress-handle');
 
+// Volume controls.
 const volumeTrack = document.getElementById('volume-track');
 const volumeFill = document.getElementById('volume-fill');
 const volumeHandle = document.getElementById('volume-handle');
@@ -421,6 +432,7 @@ const volumeButton = document.getElementById('volume-btn');
 
 const playerBar = document.querySelector('.player-bar');
 
+// Now Playing panel and responsive drawers.
 const nowPlayingArt = document.getElementById('now-playing-art');
 const nowPlayingTitle = document.getElementById('now-playing-title');
 const nowPlayingArtist = document.getElementById('now-playing-artist');
@@ -433,11 +445,15 @@ const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
 const nowPlayingToggleBtn = document.getElementById('now-playing-toggle-btn');
 const nowPlayingCloseBtn = document.getElementById('now-playing-close-btn');
 const responsiveBackdrop = document.getElementById('responsive-backdrop');
+
+// Status messages and shared tooltip.
 const playbackStatus = document.getElementById('playback-status');
 const playbackStatusIcon = document.getElementById('playback-status-icon');
 const playbackStatusMessage = document.getElementById('playback-status-message');
 const playbackStatusClose = document.getElementById('playback-status-close');
+const cursorTooltip = document.getElementById('cursor-tooltip');
 
+// Playback timers and transient runtime state.
 const failedPlaybackTrackIndices = new Set();
 let playbackRecoveryTimer = null;
 let playbackLoadTimer = null;
@@ -447,8 +463,9 @@ let pendingResumeTime = null;
 let playbackSessionSaveTimer = null;
 let playbackSessionIsReady = false;
 let volumeBeforeMute = DEFAULT_VOLUME;
+let tooltipTarget = null;
 
-// ============ Helpers ============
+// ======================== GENERAL UI HELPERS ========================
 function formatTime(seconds){
   if (!isFinite(seconds) || seconds < 0) return "0:00";
   const m = Math.floor(seconds / 60);
@@ -462,6 +479,16 @@ function setPercent(el, fillEl, handleEl, percent){
   handleEl.style.left = pct + "%";
 }
 
+function setButtonTooltip(button, label){
+  if (!button) return;
+  button.dataset.tooltip = label;
+
+  if (tooltipTarget === button && cursorTooltip.classList.contains('is-visible')){
+    cursorTooltip.textContent = label;
+  }
+}
+
+// --- Progress and volume UI ---
 function updateProgressAccessibility(currentTime = audio.currentTime, duration = audio.duration){
   const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
   const safeCurrent = safeDuration
@@ -499,6 +526,7 @@ function updateVolumeAccessibility(){
     : percent < 50 ? 'volume_down' : 'volume_up';
   volumeButton.setAttribute('aria-label', isMuted ? 'Unmute' : 'Mute');
   volumeButton.setAttribute('aria-pressed', String(isMuted));
+  setButtonTooltip(volumeButton, isMuted ? 'Unmute' : 'Mute');
 }
 
 function setVolume(level, { save = true } = {}){
@@ -541,6 +569,7 @@ function isNativeSpaceControl(target){
   ));
 }
 
+// --- Playback status, loading and control states ---
 function hidePlaybackStatus(){
   if (!playbackStatus) return;
   clearTimeout(playbackStatusTimer);
@@ -574,6 +603,7 @@ function setSeekingAvailable(isAvailable){
 }
 
 function updatePlayerPlayButton(){
+  const playLabel = state.isPlaying ? 'Pause' : 'Play';
   playBtn.classList.toggle('is-loading', state.isLoading);
   playerBar.classList.toggle('is-loading', state.isLoading);
   playIcon.textContent = state.isLoading
@@ -583,6 +613,7 @@ function updatePlayerPlayButton(){
     'aria-label',
     state.isLoading ? 'Loading song' : state.isPlaying ? 'Pause' : 'Play'
   );
+  setButtonTooltip(playBtn, playLabel);
 }
 
 function setPlaybackLoading(isLoading){
@@ -607,6 +638,7 @@ function startPlaybackLoadTimer(){
   }, 12000);
 }
 
+// --- Playback-session restoration and saving ---
 function restorePlaybackSession(){
   const savedSession = readPlaybackSession();
 
@@ -614,8 +646,7 @@ function restorePlaybackSession(){
     return {
       currentIndex: 0,
       currentTime: 0,
-      volume: DEFAULT_VOLUME,
-      wasPlaying: false
+      volume: DEFAULT_VOLUME
     };
   }
 
@@ -644,8 +675,7 @@ function restorePlaybackSession(){
   return {
     currentIndex,
     currentTime: savedTrackIsAvailable ? savedSession.currentTime : 0,
-    volume: savedSession.volume,
-    wasPlaying: savedSession.wasPlaying
+    volume: savedSession.volume
   };
 }
 
@@ -664,8 +694,7 @@ function savePlaybackSession(){
         playingPlaylistId: state.playingPlaylistId,
         currentIndex: state.currentIndex,
         currentTime: Math.max(0, currentTime),
-        volume: audio.volume,
-        wasPlaying: state.isPlaying
+        volume: audio.volume
       })
     );
   } catch (error) {
@@ -679,7 +708,7 @@ function schedulePlaybackSessionSave(){
   playbackSessionSaveTimer = setTimeout(savePlaybackSession, 800);
 }
 
-// MUSICOZY STEP 11 — RESPONSIVE DRAWERS
+// ======================== RESPONSIVE DRAWERS ========================
 function syncResponsiveBackdrop(){
   if (!responsiveBackdrop) return;
 
@@ -749,6 +778,7 @@ function handleResponsiveResize(){
   if (window.innerWidth > 1180) closeNowPlayingDrawer();
 }
 
+// ======================== PLAYLIST QUERIES AND QUEUE ========================
 function getPlaylist(playlistId = state.activePlaylistId){
   const playlist = playlists[playlistId];
 
@@ -819,6 +849,7 @@ function getUpcomingTrackIndices(playlistId = state.playingPlaylistId, limit = 3
   );
 }
 
+// ======================== ACTIVE PLAYLIST AND LIKE UI ========================
 function updateHeroPlayIcon(){
   const selectedPlaylistHasTracks = getPlaylist().trackIndices.length > 0;
   const selectedPlaylistIsLoading =
@@ -974,6 +1005,7 @@ function updatePlaylistActions(){
   }
 }
 
+// ======================== RECENTLY PLAYED ========================
 function addRecentlyPlayed(trackIndex){
   if (state.recentlyPlayed[0] === trackIndex) return;
 
@@ -1016,6 +1048,7 @@ function clearRecentlyPlayed(){
   }
 }
 
+// ======================== CUSTOM PLAYLIST HELPERS ========================
 function getCustomPlaylistRecord(playlistId){
   return state.customPlaylists.find(playlist => playlist.id === playlistId);
 }
@@ -1043,6 +1076,7 @@ function closePlaylistActionsMenu(){
   playlistMoreBtn.setAttribute('aria-expanded', 'false');
 }
 
+// ======================== PLAYLIST SORTING ========================
 function getActivePlaylistSort(){
   return getPlaylistSort(state.activePlaylistId);
 }
@@ -1134,6 +1168,7 @@ function sortTrackEntries(trackEntries, sortKey){
   return sortedTracks;
 }
 
+// ======================== CREATE, RENAME AND DELETE PLAYLISTS ========================
 function createCustomPlaylistId(){
   const randomPart = Math.random().toString(36).slice(2, 9);
   return `custom-${Date.now()}-${randomPart}`;
@@ -1282,6 +1317,7 @@ function deleteCustomPlaylist(playlistId){
   return true;
 }
 
+// ======================== ADD SONGS TO PLAYLISTS ========================
 function hidePlaylistToast(){
   clearTimeout(playlistToastTimer);
   playlistToast.hidden = true;
@@ -1403,6 +1439,7 @@ function togglePlaylistDestination(destinationId){
   renderPlaylistDestinations();
 }
 
+// ======================== PLAYLIST VIEW ========================
 function updateHeroDetails(){
   const playlist = getPlaylist();
   const trackCount = playlist.trackIndices.length;
@@ -1434,8 +1471,7 @@ function updatePlaylistView(){
   updatePlaylistActions();
 }
 
-// MUSICOZY STEP 6C — LIKED SONGS GREEN TICK
-// ============ Rendering and filtering the track list ============
+// ======================== TRACK LIST RENDERING ========================
 function renderTrackList(query = ""){
   const normalizedQuery = query.trim().toLowerCase();
   const playlist = getPlaylist();
@@ -1551,7 +1587,7 @@ function updateActiveRow(){
   });
 }
 
-// Quietly load each track's metadata so the list can show real durations
+// Load track metadata quietly so the list can display real durations.
 function preloadDurations(){
   let settledMetadataCount = 0;
 
@@ -1590,7 +1626,7 @@ function preloadDurations(){
   });
 }
 
-// ============ Playback control ============
+// ======================== PLAYBACK CONTROL ========================
 function requestAudioPlayback(){
   const requestedTrackIndex = state.currentIndex;
 
@@ -1807,7 +1843,7 @@ function seekBy(seconds){
   setPlaybackPosition(audio.currentTime + seconds);
 }
 
-// ============ Audio events ============
+// ======================== AUDIO EVENTS ========================
 audio.addEventListener('play', () => {
   state.isPlaying = true;
   state.shouldAutoplay = true;
@@ -1881,7 +1917,8 @@ audio.addEventListener('timeupdate', () => {
 audio.addEventListener('ended', playNext);
 audio.addEventListener('error', () => handlePlaybackFailure());
 
-// ============ Button wiring ============
+// ======================== UI EVENT LISTENERS ========================
+// Player, seek, volume and status controls.
 playBtn.addEventListener('click', togglePlay);
 heroPlayBtn.addEventListener('click', playActivePlaylist);
 nextBtn.addEventListener('click', playNext);
@@ -1891,6 +1928,7 @@ forward10Btn?.addEventListener('click', () => seekBy(10));
 volumeButton?.addEventListener('click', toggleMute);
 playbackStatusClose?.addEventListener('click', hidePlaybackStatus);
 
+// Responsive sidebar and Now Playing drawers.
 sidebarToggleBtn?.addEventListener('click', () => {
   if (document.body.classList.contains('sidebar-drawer-open')){
     closeSidebarDrawer(true);
@@ -1911,6 +1949,7 @@ nowPlayingCloseBtn?.addEventListener('click', () => closeNowPlayingDrawer(true))
 responsiveBackdrop?.addEventListener('click', () => closeResponsiveDrawers(true));
 window.addEventListener('resize', handleResponsiveResize);
 
+// Sidebar playlist navigation.
 playlistsEl.addEventListener('click', event => {
   const item = event.target.closest?.('.playlist-item[data-playlist-id]');
   if (!item) return;
@@ -1931,6 +1970,7 @@ playlistsEl.addEventListener('click', event => {
 
 playlistFavoriteBtn.addEventListener('click', toggleActivePlaylistFavorite);
 
+// Custom playlist action menu.
 playlistMoreBtn.addEventListener('click', event => {
   event.preventDefault();
   event.stopPropagation();
@@ -1964,6 +2004,7 @@ document.addEventListener('click', event => {
   }
 });
 
+// Track sorting menu.
 trackSortBtn.addEventListener('click', event => {
   event.preventDefault();
   event.stopPropagation();
@@ -1992,6 +2033,7 @@ document.addEventListener('click', event => {
   }
 });
 
+// Create/rename playlist and destination dialogs.
 createPlaylistBtn.addEventListener('click', () => openPlaylistModal());
 
 playlistForm.addEventListener('submit', event => {
@@ -2023,6 +2065,7 @@ playlistToastChange.addEventListener('click', () => {
   openAddToPlaylistModal(destinationTrackIndex);
 });
 
+// Escape closes the topmost open dialog, drawer or menu.
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
 
@@ -2046,7 +2089,7 @@ document.addEventListener('keydown', event => {
   closeTrackSortMenu();
 });
 
-// ============ Global player shortcuts ============
+// ======================== KEYBOARD SHORTCUTS ========================
 document.addEventListener('keydown', event => {
   if (event.defaultPrevented
     || event.ctrlKey
@@ -2108,6 +2151,7 @@ document.addEventListener('keydown', event => {
   }
 });
 
+// Search, current-song likes and listening-history controls.
 searchInput?.addEventListener('input', () => {
   const hasText = searchInput.value.length > 0;
   searchClearBtn?.toggleAttribute('hidden', !hasText);
@@ -2125,6 +2169,7 @@ likeBtn.addEventListener('click', toggleCurrentLike);
 panelLikeBtn.addEventListener('click', toggleCurrentLike);
 clearHistoryBtn.addEventListener('click', clearRecentlyPlayed);
 
+// Keep saved playlists and likes synchronized across open browser tabs.
 window.addEventListener('storage', event => {
   if (event.key === LIKED_SONGS_STORAGE_KEY){
     state.liked = readSavedLikedSongs();
@@ -2195,7 +2240,7 @@ window.addEventListener('storage', event => {
   }
 });
 
-// ============ Drag-to-seek (progress bar) ============
+// ======================== PROGRESS SEEKING ========================
 function seekFromEvent(clientX){
   if (!seekingIsAvailable) return;
   const rect = progressTrack.getBoundingClientRect();
@@ -2219,7 +2264,7 @@ progressTrack.addEventListener('mousedown', (e) => {
   window.addEventListener('mouseup', onUp);
 });
 
-// touch support
+// Touch dragging for the progress bar.
 progressTrack.addEventListener('touchstart', (e) => {
   if (!seekingIsAvailable) return;
   state.isSeeking = true;
@@ -2250,7 +2295,7 @@ progressTrack.addEventListener('keydown', event => {
   setPlaybackPosition(nextTime);
 });
 
-// ============ Volume ============
+// ======================== VOLUME CONTROL ========================
 function setVolumeFromEvent(clientX){
   const rect = volumeTrack.getBoundingClientRect();
   if (!rect.width) return;
@@ -2292,8 +2337,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) savePlaybackSession();
 });
 
-// ============ Cursor-following tooltips ============
-const cursorTooltip = document.getElementById('cursor-tooltip');
+// ======================== CURSOR TOOLTIPS ========================
 const TOOLTIP_DELAY = 150; // ms of no movement before it appears
 let tooltipTimer = null;
 
@@ -2302,9 +2346,16 @@ document.addEventListener('pointermove', (e) => {
 
   if (target){
     const isDark = target.dataset.tooltipVariant === 'dark';
+    const isTop = target.dataset.tooltipPlacement === 'top';
+    tooltipTarget = target;
 
-    if (isDark){
-      // anchored below the icon — position doesn't track the cursor
+    if (isTop){
+      // Footer controls are anchored above so the tooltip stays on-screen.
+      const rect = target.getBoundingClientRect();
+      cursorTooltip.style.left = (rect.left + rect.width / 2) + 'px';
+      cursorTooltip.style.top = (rect.top - 10) + 'px';
+    } else if (isDark){
+      // Navbar tooltips remain anchored below their icons.
       const rect = target.getBoundingClientRect();
       cursorTooltip.style.left = (rect.left + rect.width / 2) + 'px';
       cursorTooltip.style.top = (rect.bottom + 10) + 'px';
@@ -2318,20 +2369,20 @@ document.addEventListener('pointermove', (e) => {
     cursorTooltip.classList.remove('is-visible');
     clearTimeout(tooltipTimer);
 
-    const label = target.dataset.tooltip;
-
     tooltipTimer = setTimeout(() => {
-      cursorTooltip.textContent = label;
+      cursorTooltip.textContent = target.dataset.tooltip;
       cursorTooltip.classList.toggle('is-dark', isDark);
+      cursorTooltip.classList.toggle('is-top', isTop);
       cursorTooltip.classList.add('is-visible');
     }, TOOLTIP_DELAY);
   } else {
+    tooltipTarget = null;
     clearTimeout(tooltipTimer);
     cursorTooltip.classList.remove('is-visible');
   }
 });
 
-// ============ Init ============
+// ======================== APPLICATION STARTUP ========================
 const restoredPlaybackSession = restorePlaybackSession();
 renderCustomPlaylists();
 updatePlaylistView();
