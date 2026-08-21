@@ -1,26 +1,10 @@
-<!-- MUSICOZY STEP 14 — KEYBOARD CONTROLS AND ACCESSIBILITY -->
-<!-- MUSICOZY STEP 13 — SAVED PLAYBACK SESSION -->
-<!-- MUSICOZY STEP 12 — RELIABLE AUDIO LOADING AND RECOVERY -->
-<!-- MUSICOZY STEP 11 — RESPONSIVE TABLET AND MOBILE LAYOUT -->
-<!-- MUSICOZY STEP 10 — PER-PLAYLIST SONG SORTING -->
-<!-- MUSICOZY STEP 9 — CUSTOM PLAYLIST GREEN TICK -->
-<!-- MUSICOZY STEP 8 — PLAYLIST FAVORITES AND MAIN ACTION MENU -->
-<!-- MUSICOZY STEP 7 — RENAME AND DELETE CUSTOM PLAYLISTS -->
-<!-- MUSICOZY STEP 6C — LIKED SONGS GREEN TICK -->
-<!-- MUSICOZY STEP 6B — ADD SONGS TO PLAYLISTS -->
-<!-- MUSICOZY STEP 6A — CREATE CUSTOM PLAYLIST -->
-<!-- MUSICOZY STEP 5 — RECENTLY PLAYED -->
-<!-- MUSICOZY STEP 4 — FUNCTIONAL QUEUE -->
-<!-- MUSICOZY LIKES STEP 3 — LIKED SONGS PLAYLIST -->
-<!-- MUSICOZY LIKES STEP 2 — SAVED AFTER REFRESH -->
-<!-- MUSICOZY LIKES STEP 1 — HEART BUTTONS -->
-<!-- MUSICOZY PLAYLIST SWITCHING V1 — NEW FILE -->
 <!DOCTYPE html>
-<!-- MUSICOZY NAVBAR OVERLAP FIX — REVISION 7 -->
-<!-- MUSICOZY CC0 MUSIC UPDATE — REVISION 1 -->
-<!-- MUSICOZY 10-SECOND SEEK CONTROLS — REVISION 1 -->
 <html lang="en">
 <head>
+<!-- ================================================================
+     DOCUMENT SETUP
+     Fonts, page metadata and the external stylesheet are loaded here.
+     ================================================================ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Musicozy — Late Night Drive</title>
@@ -31,10 +15,16 @@
 </head>
 <body>
 
+<!-- ================================================================
+     APPLICATION SHELL
+     Desktop: sidebar, main content and Now Playing panel.
+     Tablet/mobile: the side panels become drawers.
+     ================================================================ -->
 <div class="app">
 
-  <!-- SIDEBAR -->
+  <!-- ======================== SIDEBAR ======================== -->
   <aside class="sidebar" id="sidebar">
+    <!-- Brand and mobile drawer close button -->
     <div class="brand has-tooltip" data-tooltip="Musicozy">
       <img src="logo.png" alt="Musicozy" class="brand-logo-img">
       <button class="drawer-close-btn sidebar-drawer-close" id="sidebar-close-btn" type="button" aria-label="Close library">
@@ -43,10 +33,12 @@
     </div>
 
     <div class="sidebar-box">
+      <!-- Library navigation -->
       <nav class="nav">
         <a href="#" class="nav-item active"><span class="nav-icon material-symbols-rounded">library_music</span>Your Library</a>
       </nav>
 
+      <!-- Built-in and user-created playlists -->
       <div class="playlists">
         <p class="playlists-label">Playlists</p>
         <button class="create-playlist-btn" id="create-playlist-btn" type="button">
@@ -71,11 +63,12 @@
     </div>
   </aside>
 
-  <!-- NAVBAR: spans the main content and Now Playing columns only -->
+  <!-- ======================== TOP NAVBAR ========================
+       This header spans the main content and Now Playing columns.
+       The sidebar logo intentionally remains in its own column. -->
   <header class="main-header">
-    <!-- This zone sits directly above the MAIN content box. -->
+    <!-- Main content controls: drawer, Home, Search and Premium -->
     <div class="main-nav-zone">
-      <!-- Home and Search stay grouped near the middle of the main panel. -->
       <div class="main-nav-center">
         <button
           class="responsive-icon-btn mobile-sidebar-toggle"
@@ -98,12 +91,12 @@
           </button>
         </div>
       </div>
-      <!-- Premium overlaps the boundary: 3/4 main panel and 1/4 Now Playing. -->
+      <!-- Premium overlaps the panel boundary by one quarter of its width. -->
       <button class="premium-btn has-tooltip" data-tooltip="Upgrade to Premium">Explore Premium</button>
     </div>
-    <!-- This separate zone sits directly above the NOW PLAYING box. -->
+
+    <!-- Now Playing controls: Install, Notifications and profile -->
     <div class="now-playing-nav-zone">
-      <!-- One 18px leading gap comes before this evenly spaced control group. -->
       <button class="install-btn">
         <span class="material-symbols-rounded">download</span>
         Install App
@@ -117,9 +110,11 @@
     </div>
   </header>
 
-  <!-- MAIN -->
+  <!-- ======================== MAIN CONTENT ======================== -->
   <main class="main">
     <div class="main-content">
+      <div class="main-content-scroll">
+      <!-- Active playlist artwork and description -->
       <section class="hero">
         <div class="hero-art">
           <img id="hero-art" src="https://picsum.photos/seed/amberdrive/300/300" alt="Late Night Drive artwork">
@@ -131,6 +126,7 @@
         </div>
       </section>
 
+      <!-- Playlist play, favorite and management actions -->
       <div class="action-row">
         <button class="play-pill" id="hero-play" aria-label="Play playlist">
           <span class="material-symbols-rounded" id="hero-play-icon">play_arrow</span>
@@ -172,6 +168,7 @@
         ><span class="material-symbols-rounded">delete_sweep</span></button>
       </div>
 
+      <!-- Per-playlist sorting menu -->
       <div class="track-toolbar">
         <div class="track-sort-wrap">
           <button
@@ -211,6 +208,7 @@
         </div>
       </div>
 
+      <!-- Searchable song list; JavaScript injects the rows -->
       <section class="track-table">
         <div class="track-row track-row--head">
           <span class="col-index">#</span>
@@ -220,15 +218,17 @@
           <span class="col-duration"><span class="material-symbols-rounded">schedule</span></span>
         </div>
         <div class="track-list" id="track-list" aria-live="polite">
-          <!-- rows injected by script.js -->
+          <!-- Song rows are injected by script.js. -->
         </div>
       </section>
+      </div>
     </div>
   </main>
 
-  <!-- PERMANENT NOW PLAYING PANEL -->
+  <!-- ======================== NOW PLAYING PANEL ======================== -->
   <aside class="now-playing-panel" id="now-playing-panel">
     <div class="now-playing-box">
+      <!-- Current playlist and mobile drawer close button -->
       <div class="now-playing-heading">
         <div>
           <p class="now-playing-kicker">Now Playing</p>
@@ -239,6 +239,7 @@
         </button>
       </div>
 
+      <!-- Current song artwork and information -->
       <div class="now-playing-cover">
         <img id="now-playing-art" src="https://picsum.photos/seed/synthwavealex/300/300" alt="Current track artwork">
       </div>
@@ -253,29 +254,36 @@
         </button>
       </div>
 
+      <!-- Short artist description -->
       <div class="artist-card">
         <p class="panel-section-label">About the artist</p>
         <p class="artist-card-name" id="artist-card-name">Alex McCulloch</p>
         <p class="artist-card-copy">Dreamy late-night sounds selected for your Musicozy drive.</p>
       </div>
 
+      <!-- Upcoming queue -->
       <div class="up-next">
         <div class="up-next-heading">
           <p class="panel-section-label">Next in queue</p>
           <span>Next 3</span>
         </div>
         <div class="queue-list" id="queue-list" aria-live="polite">
-          <!-- Upcoming songs are injected by JavaScript. -->
+          <!-- Queue buttons are injected by script.js. -->
         </div>
       </div>
     </div>
   </aside>
 </div>
 
+<!-- Shared backdrop displayed behind responsive drawers -->
 <div class="responsive-backdrop" id="responsive-backdrop" hidden></div>
 
-<!-- BOTTOM PLAYER BAR -->
+<!-- ================================================================
+     BOTTOM PLAYER
+     Current song, playback controls, progress and volume.
+     ================================================================ -->
 <footer class="player-bar">
+  <!-- Current song summary and persistent Like button -->
   <div class="player-now-playing">
     <div class="np-art">
       <img id="bar-art" src="" alt="">
@@ -289,15 +297,16 @@
     </button>
   </div>
 
+  <!-- Previous, seek, play/pause, next and progress controls -->
   <div class="player-controls">
     <div class="control-buttons">
-      <button class="icon-btn" id="replay-10-btn" type="button" aria-label="Replay 10 seconds" aria-keyshortcuts="ArrowLeft"><span class="material-symbols-rounded">replay_10</span></button>
-      <button class="icon-btn" id="prev-btn" type="button" aria-label="Previous" aria-keyshortcuts="P"><span class="material-symbols-rounded">skip_previous</span></button>
-      <button class="icon-btn play-btn" id="play-btn" type="button" aria-label="Play" aria-keyshortcuts="Space">
+      <button class="icon-btn has-tooltip" id="replay-10-btn" type="button" aria-label="Skip back 10 seconds" aria-keyshortcuts="ArrowLeft" data-tooltip="Skip back 10 seconds" data-tooltip-variant="dark" data-tooltip-placement="top"><span class="material-symbols-rounded">replay_10</span></button>
+      <button class="icon-btn has-tooltip" id="prev-btn" type="button" aria-label="Previous" aria-keyshortcuts="P" data-tooltip="Previous" data-tooltip-variant="dark" data-tooltip-placement="top"><span class="material-symbols-rounded">skip_previous</span></button>
+      <button class="icon-btn play-btn has-tooltip" id="play-btn" type="button" aria-label="Play" aria-keyshortcuts="Space" data-tooltip="Play" data-tooltip-variant="dark" data-tooltip-placement="top">
         <span class="material-symbols-rounded" id="play-icon">play_arrow</span>
       </button>
-      <button class="icon-btn" id="next-btn" type="button" aria-label="Next" aria-keyshortcuts="N"><span class="material-symbols-rounded">skip_next</span></button>
-      <button class="icon-btn" id="forward-10-btn" type="button" aria-label="Forward 10 seconds" aria-keyshortcuts="ArrowRight"><span class="material-symbols-rounded">forward_10</span></button>
+      <button class="icon-btn has-tooltip" id="next-btn" type="button" aria-label="Next" aria-keyshortcuts="N" data-tooltip="Next" data-tooltip-variant="dark" data-tooltip-placement="top"><span class="material-symbols-rounded">skip_next</span></button>
+      <button class="icon-btn has-tooltip" id="forward-10-btn" type="button" aria-label="Skip forward 10 seconds" aria-keyshortcuts="ArrowRight" data-tooltip="Skip forward 10 seconds" data-tooltip-variant="dark" data-tooltip-placement="top"><span class="material-symbols-rounded">forward_10</span></button>
     </div>
     <div class="progress-row">
       <span class="time-current" id="time-current">0:00</span>
@@ -321,6 +330,7 @@
     </div>
   </div>
 
+  <!-- Responsive Now Playing toggle and volume controls -->
   <div class="player-extra">
     <button
       class="icon-btn responsive-now-playing-toggle"
@@ -331,12 +341,15 @@
       aria-expanded="false"
     ><span class="material-symbols-rounded">queue_music</span></button>
     <button
-      class="vol-icon volume-btn material-symbols-rounded"
+      class="vol-icon volume-btn material-symbols-rounded has-tooltip"
       id="volume-btn"
       type="button"
       aria-label="Mute"
       aria-keyshortcuts="M"
       aria-pressed="false"
+      data-tooltip="Mute"
+      data-tooltip-variant="dark"
+      data-tooltip-placement="top"
     >volume_up</button>
     <div
       class="volume-track"
@@ -356,7 +369,8 @@
   </div>
 </footer>
 
-<!-- PLAYBACK LOADING AND ERROR MESSAGE -->
+<!-- ======================== STATUS MESSAGES ======================== -->
+<!-- Audio loading and error message -->
 <div class="playback-status" id="playback-status" role="status" aria-live="polite" aria-atomic="true" hidden>
   <span class="material-symbols-rounded playback-status-icon" id="playback-status-icon">warning</span>
   <span class="playback-status-message" id="playback-status-message"></span>
@@ -365,7 +379,8 @@
   </button>
 </div>
 
-<!-- CREATE PLAYLIST DIALOG -->
+<!-- ======================== PLAYLIST DIALOGS ======================== -->
+<!-- Create or rename a custom playlist -->
 <div class="playlist-modal" id="playlist-modal" hidden>
   <div class="playlist-modal-backdrop" data-close-playlist-modal></div>
   <section
@@ -406,7 +421,7 @@
   </section>
 </div>
 
-<!-- ADD TO PLAYLIST DIALOG -->
+<!-- Select every playlist that should contain a song -->
 <div class="playlist-modal" id="add-to-playlist-modal" hidden>
   <div class="playlist-modal-backdrop" data-close-add-to-playlist></div>
   <section
@@ -436,14 +451,18 @@
   </section>
 </div>
 
-<!-- ADDED TO PLAYLIST MESSAGE -->
+<!-- Confirmation shown after adding a song to Liked Songs -->
 <div class="playlist-toast" id="playlist-toast" role="status" aria-live="polite" hidden>
   <span class="material-symbols-rounded playlist-toast-heart">favorite</span>
   <span class="playlist-toast-message" id="playlist-toast-message">Added to Liked Songs.</span>
   <button class="playlist-toast-change" id="playlist-toast-change" type="button">Change</button>
 </div>
 
+<!-- ======================== MEDIA AND SCRIPTS ======================== -->
+<!-- The audio element is controlled entirely by script.js. -->
 <audio id="audio" preload="metadata"></audio>
+
+<!-- Shared tooltip used by the navbar, brand and player controls. -->
 <div id="cursor-tooltip" class="cursor-tooltip"></div>
 
 <script src="script.js"></script>
