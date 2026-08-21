@@ -513,6 +513,58 @@ button:focus-visible, a:focus-visible{
 }
 .playlist-toast-change:hover{ text-decoration:underline; }
 
+/* ============ Playback status ============ */
+.playback-status{
+  position:fixed;
+  left:50%;
+  bottom:102px;
+  z-index:1050;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:fit-content;
+  max-width:calc(100vw - 30px);
+  padding:11px 12px 11px 14px;
+  background:#211e23;
+  border:1px solid var(--amber-dim);
+  border-radius:18px;
+  color:var(--text);
+  box-shadow:0 16px 42px rgba(0,0,0,.55);
+  transform:translateX(-50%);
+  font-size:12.5px;
+  font-weight:600;
+}
+.playback-status[hidden]{ display:none; }
+.playback-status-icon{
+  flex-shrink:0;
+  color:var(--amber);
+  font-size:20px;
+}
+.playback-status.is-terminal{
+  border-color:rgba(227,107,107,.55);
+}
+.playback-status.is-terminal .playback-status-icon{ color:#e36b6b; }
+.playback-status-message{
+  flex:0 1 auto;
+  min-width:0;
+  line-height:1.4;
+}
+.playback-status-close{
+  width:30px;
+  height:30px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  color:var(--text-muted);
+  font-size:18px;
+}
+.playback-status-close:hover{
+  color:var(--text);
+  background:var(--surface-hover);
+}
+
 /* ============ Main ============ */
 .main{
   grid-column: 2;
@@ -1347,6 +1399,7 @@ button:focus-visible, a:focus-visible{
   animation-play-state: paused;
 }
 .player-bar.is-playing .np-art img{ animation-play-state: running; }
+.player-bar.is-loading .np-art img{ animation-play-state: paused; }
 
 @keyframes spin{
   from{ transform: rotate(0deg); }
@@ -1398,6 +1451,14 @@ button:focus-visible, a:focus-visible{
   font-size: 20px;
 }
 .play-btn:hover{ transform: scale(1.06); background: var(--amber-bright); }
+.play-btn.is-loading .material-symbols-rounded,
+.play-pill.is-loading .material-symbols-rounded{
+  animation:playback-loading-spin .8s linear infinite;
+}
+
+@keyframes playback-loading-spin{
+  to{ transform:rotate(360deg); }
+}
 
 .progress-row{
   display:flex;
@@ -1430,6 +1491,29 @@ button:focus-visible, a:focus-visible{
   width: 0%;
 }
 .progress-track:hover .progress-fill{ background: var(--amber); }
+.progress-track:focus-visible,
+.volume-track:focus-visible{
+  outline:2px solid var(--amber-bright);
+  outline-offset:4px;
+}
+.progress-track:focus-visible .progress-fill,
+.volume-track:focus-visible .volume-fill{
+  background:var(--amber);
+}
+.progress-track:focus-visible .progress-handle,
+.volume-track:focus-visible .volume-handle{
+  opacity:1;
+}
+.progress-track.is-disabled{
+  cursor:not-allowed;
+  opacity:.45;
+}
+.progress-track.is-disabled:hover .progress-fill{ background:var(--text); }
+.control-buttons .icon-btn:disabled{
+  opacity:.35;
+  cursor:not-allowed;
+  transform:none;
+}
 .progress-handle, .volume-handle{
   position:absolute;
   top:50%;
@@ -1452,6 +1536,12 @@ button:focus-visible, a:focus-visible{
   width: 140px;
 }
 .vol-icon{ font-size: 19px; color: var(--text-muted); }
+.volume-btn{
+  padding:3px;
+  border-radius:50%;
+  line-height:1;
+}
+.volume-btn:hover{ color:var(--text); }
 .volume-track{ width: 90px; flex: none; }
 .volume-track:hover .volume-handle{ opacity:1; }
 .volume-track:hover .volume-fill{ background: var(--amber); }
@@ -1622,6 +1712,7 @@ button:focus-visible, a:focus-visible{
     padding:0;
     font-size:22px;
   }
+  .playback-status{ bottom:98px; }
 }
 
 /* Compact tablets: preserve the fixed panels while freeing room for tracks. */
@@ -1830,6 +1921,7 @@ button:focus-visible, a:focus-visible{
   }
 
   .playlist-toast{ bottom:116px; }
+  .playback-status{ bottom:120px; }
   .cursor-tooltip{ display:none; }
 }
 
@@ -1863,7 +1955,7 @@ button:focus-visible, a:focus-visible{
     overflow:hidden;
     -webkit-box-orient:vertical;
     -webkit-line-clamp:3;
-    line-clamp: 3;
+    line-clamp:3;
     line-height:1.4;
   }
 
@@ -1896,13 +1988,17 @@ button:focus-visible, a:focus-visible{
     gap:12px;
   }
   .hero-art{ width:88px; height:88px; }
-  .hero-meta{ -webkit-line-clamp:2;
-              line-clamp: 2; }
+  .hero-meta{
+    -webkit-line-clamp:2;
+    line-clamp:2;
+  }
   .control-buttons{ gap:2px; }
   .control-buttons .icon-btn{ width:40px; height:40px; }
 }
 
 @media (prefers-reduced-motion: reduce){
   .np-art img, .eq span{ animation: none !important; }
+  .play-btn.is-loading .material-symbols-rounded,
+  .play-pill.is-loading .material-symbols-rounded{ animation:none !important; }
   .sidebar, .now-playing-panel{ transition:none !important; }
 }
