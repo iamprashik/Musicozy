@@ -173,6 +173,11 @@ function saveRecentlyPlayed(){
 
 // --- Custom playlists ---
 const CUSTOM_PLAYLISTS_STORAGE_KEY = "musicozy-custom-playlists-v1";
+const CUSTOM_PLAYLIST_COVER_SYNC_KEY = "musicozy-playlist-cover-sync-v1";
+const PLAYLIST_COVER_DB_NAME = "musicozy-media-v1";
+const PLAYLIST_COVER_DB_VERSION = 1;
+const PLAYLIST_COVER_STORE_NAME = "playlist-covers";
+const MAX_PLAYLIST_COVER_FILE_SIZE = 10 * 1024 * 1024;
 
 function readCustomPlaylists(){
   try {
@@ -205,6 +210,8 @@ function readCustomPlaylists(){
         cover: typeof playlist.cover === "string" && playlist.cover
           ? playlist.cover
           : `https://picsum.photos/seed/${id}/300/300`,
+        customCoverUrl: null,
+        hasCustomCover: false,
         trackIndices
       });
 
@@ -218,12 +225,104 @@ function readCustomPlaylists(){
 
 function saveCustomPlaylists(){
   try {
+    const playlistsToSave = state.customPlaylists.map(playlist => ({
+      id: playlist.id,
+      name: playlist.name,
+      cover: playlist.cover,
+      trackIndices: [...playlist.trackIndices]
+    }));
+
     localStorage.setItem(
       CUSTOM_PLAYLISTS_STORAGE_KEY,
-      JSON.stringify(state.customPlaylists)
+      JSON.stringify(playlistsToSave)
     );
   } catch (error) {
     console.warn("Musicozy could not save custom playlists:", error);
+  }
+}
+
+// Custom cover blobs live in IndexedDB so large images never fill localStorage.
+function openPlaylistCoverDatabase(){
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB){
+      reject(new Error("This browser does not support persistent playlist covers."));
+      return;
+    }
+
+    const request = window.indexedDB.open(PLAYLIST_COVER_DB_NAME, PLAYLIST_COVER_DB_VERSION);
+    let requestWasBlocked = false;
+
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains(PLAYLIST_COVER_STORE_NAME)){
+        database.createObjectStore(PLAYLIST_COVER_STORE_NAME, { keyPath: "playlistId" });
+      }
+    };
+    request.onsuccess = () => {
+      if (requestWasBlocked){
+        request.result.close();
+        return;
+      }
+      resolve(request.result);
+    };
+    request.onerror = () => reject(request.error || new Error("Could not open cover storage."));
+    request.onblocked = () => {
+      requestWasBlocked = true;
+      reject(new Error("Cover storage is open in another tab. Close it and try again."));
+    };
+  });
+}
+
+async function runPlaylistCoverStoreRequest(mode, requestFactory){
+  const database = await openPlaylistCoverDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(PLAYLIST_COVER_STORE_NAME, mode);
+    const store = transaction.objectStore(PLAYLIST_COVER_STORE_NAME);
+    const request = requestFactory(store);
+    let requestResult;
+
+    request.onsuccess = () => { requestResult = request.result; };
+    request.onerror = () => reject(request.error || new Error("Playlist cover request failed."));
+    transaction.oncomplete = () => {
+      database.close();
+      resolve(requestResult);
+    };
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error || new Error("Playlist cover transaction failed."));
+    };
+    transaction.onabort = () => {
+      database.close();
+      reject(transaction.error || new Error("Playlist cover transaction was cancelled."));
+    };
+  });
+}
+
+function readAllStoredPlaylistCovers(){
+  return runPlaylistCoverStoreRequest("readonly", store => store.getAll());
+}
+
+function saveStoredPlaylistCover(playlistId, blob){
+  return runPlaylistCoverStoreRequest("readwrite", store => store.put({
+    playlistId,
+    blob,
+    updatedAt: Date.now()
+  }));
+}
+
+function deleteStoredPlaylistCover(playlistId){
+  return runPlaylistCoverStoreRequest("readwrite", store => store.delete(playlistId));
+}
+
+function notifyPlaylistCoverChange(playlistId){
+  try {
+    localStorage.setItem(
+      CUSTOM_PLAYLIST_COVER_SYNC_KEY,
+      JSON.stringify({ playlistId, updatedAt: Date.now() })
+    );
+  } catch (error) {
+    console.warn("Musicozy could not synchronize the playlist cover:", error);
   }
 }
 
@@ -381,11 +480,37 @@ const playlistDestinationList = document.getElementById('playlist-destination-li
 const playlistToast = document.getElementById('playlist-toast');
 const playlistToastMessage = document.getElementById('playlist-toast-message');
 const playlistToastChange = document.getElementById('playlist-toast-change');
+const playlistCoverModal = document.getElementById('playlist-cover-modal');
+const playlistCoverDialogTitle = document.getElementById('playlist-cover-dialog-title');
+const playlistCoverInput = document.getElementById('playlist-cover-input');
+const playlistCoverChooseBtn = document.getElementById('playlist-cover-choose-btn');
+const playlistCoverChooseLabel = document.getElementById('playlist-cover-choose-label');
+const playlistCoverEditor = document.getElementById('playlist-cover-editor');
+const playlistCoverCanvas = document.getElementById('playlist-cover-canvas');
+const playlistCoverZoom = document.getElementById('playlist-cover-zoom');
+const playlistCoverError = document.getElementById('playlist-cover-error');
+const playlistCoverSaveBtn = document.getElementById('playlist-cover-save-btn');
 
 // Temporary playlist-dialog state.
 let destinationTrackIndex = null;
 let playlistToastTimer = null;
 let editingPlaylistId = null;
+let playlistModalReturnFocus = null;
+let addToPlaylistModalReturnFocus = null;
+let playlistCoverModalReturnFocus = null;
+let coverEditorPlaylistId = null;
+let coverEditorImage = null;
+let coverEditorPreviewUrl = null;
+let coverEditorLoadToken = 0;
+let coverEditorZoom = 1;
+let coverEditorOffsetX = 0;
+let coverEditorOffsetY = 0;
+let coverEditorIsDragging = false;
+let coverEditorPointerId = null;
+let coverEditorDragStartX = 0;
+let coverEditorDragStartY = 0;
+let coverEditorDragOriginX = 0;
+let coverEditorDragOriginY = 0;
 
 // Playlist hero.
 const heroArt = document.getElementById('hero-art');
@@ -406,6 +531,8 @@ const heroPlayIcon = document.getElementById('hero-play-icon');
 const playlistFavoriteBtn = document.getElementById('playlist-favorite-btn');
 const playlistMoreBtn = document.getElementById('playlist-more-btn');
 const playlistActionsMenu = document.getElementById('playlist-actions-menu');
+const changePlaylistCoverAction = document.getElementById('change-playlist-cover-action');
+const removePlaylistCoverAction = document.getElementById('remove-playlist-cover-action');
 const renamePlaylistAction = document.getElementById('rename-playlist-action');
 const deletePlaylistAction = document.getElementById('delete-playlist-action');
 const trackSortBtn = document.getElementById('track-sort-btn');
@@ -431,6 +558,7 @@ const volumeHandle = document.getElementById('volume-handle');
 const volumeButton = document.getElementById('volume-btn');
 
 const playerBar = document.querySelector('.player-bar');
+const appShell = document.querySelector('.app');
 
 // Now Playing panel and responsive drawers.
 const nowPlayingArt = document.getElementById('now-playing-art');
@@ -567,6 +695,89 @@ function isNativeSpaceControl(target){
   return Boolean(target?.closest?.(
     'button, a, input, textarea, select, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="slider"]'
   ));
+}
+
+// --- Dialog keyboard and focus helpers ---
+const DIALOG_FOCUSABLE_SELECTOR = 'a[href], button, input, select, textarea, [tabindex]';
+
+function isHiddenInsideDialog(element, modal){
+  let current = element;
+
+  while (current && current !== modal){
+    if (current.hidden) return true;
+    current = current.parentElement;
+  }
+
+  return false;
+}
+
+function getDialogFocusableControls(modal){
+  return [...modal.querySelectorAll(DIALOG_FOCUSABLE_SELECTOR)].filter(control =>
+    !control.disabled &&
+    control.tabIndex >= 0 &&
+    !isHiddenInsideDialog(control, modal)
+  );
+}
+
+function getOpenPlaylistModal(){
+  if (!playlistCoverModal.hidden) return playlistCoverModal;
+  if (!addToPlaylistModal.hidden) return addToPlaylistModal;
+  if (!playlistModal.hidden) return playlistModal;
+  return null;
+}
+
+function syncDialogBackgroundInert(){
+  const dialogIsOpen = Boolean(getOpenPlaylistModal());
+
+  [appShell, playerBar, playbackStatus, playlistToast].forEach(element => {
+    element?.toggleAttribute('inert', dialogIsOpen);
+  });
+}
+
+function isAvailableFocusTarget(element){
+  if (!element || typeof element.focus !== 'function' || element.isConnected === false){
+    return false;
+  }
+
+  let current = element;
+  while (current && current !== document.body){
+    if (current.hidden || current.hasAttribute?.('inert')) return false;
+    current = current.parentElement;
+  }
+
+  return true;
+}
+
+function restoreDialogFocus(preferredTarget, fallbackTarget){
+  const target = isAvailableFocusTarget(preferredTarget)
+    ? preferredTarget
+    : isAvailableFocusTarget(fallbackTarget) ? fallbackTarget : null;
+
+  target?.focus({ preventScroll: true });
+}
+
+function trapFocusInsideDialog(event, modal){
+  const controls = getDialogFocusableControls(modal);
+  if (!controls.length){
+    event.preventDefault();
+    return;
+  }
+
+  const firstControl = controls[0];
+  const lastControl = controls[controls.length - 1];
+  const activeElement = document.activeElement;
+  const focusIsOutsideDialog = !modal.contains(activeElement);
+
+  if (event.shiftKey && (activeElement === firstControl || focusIsOutsideDialog)){
+    event.preventDefault();
+    lastControl.focus();
+    return;
+  }
+
+  if (!event.shiftKey && (activeElement === lastControl || focusIsOutsideDialog)){
+    event.preventDefault();
+    firstControl.focus();
+  }
 }
 
 // --- Playback status, loading and control states ---
@@ -800,7 +1011,7 @@ function getPlaylist(playlistId = state.activePlaylistId){
   if (customPlaylist){
     return {
       name: customPlaylist.name,
-      cover: customPlaylist.cover,
+      cover: getCustomPlaylistCover(customPlaylist),
       description: "A custom playlist created by you.",
       trackIndices: [...customPlaylist.trackIndices]
     };
@@ -1000,10 +1211,12 @@ function toggleActivePlaylistFavorite(){
 
 function updatePlaylistActions(){
   const isRecentlyPlayed = state.activePlaylistId === "recently-played";
-  const isCustomPlaylist = Boolean(getCustomPlaylistRecord(state.activePlaylistId));
+  const customPlaylist = getCustomPlaylistRecord(state.activePlaylistId);
+  const isCustomPlaylist = Boolean(customPlaylist);
 
   clearHistoryBtn.hidden = !isRecentlyPlayed || state.recentlyPlayed.length === 0;
   playlistMoreBtn.hidden = !isCustomPlaylist;
+  removePlaylistCoverAction.hidden = !customPlaylist?.hasCustomCover;
 
   if (!isCustomPlaylist){
     closePlaylistActionsMenu();
@@ -1054,8 +1267,72 @@ function clearRecentlyPlayed(){
 }
 
 // ======================== CUSTOM PLAYLIST HELPERS ========================
+let playlistCoverHydrationToken = 0;
+
 function getCustomPlaylistRecord(playlistId){
   return state.customPlaylists.find(playlist => playlist.id === playlistId);
+}
+
+function getCustomPlaylistCover(playlist){
+  return playlist?.customCoverUrl || playlist?.cover || "";
+}
+
+function releaseCustomPlaylistCoverUrl(playlist){
+  if (!playlist?.customCoverUrl) return;
+  window.URL?.revokeObjectURL?.(playlist.customCoverUrl);
+  playlist.customCoverUrl = null;
+}
+
+function releaseAllCustomPlaylistCoverUrls(){
+  state.customPlaylists.forEach(releaseCustomPlaylistCoverUrl);
+}
+
+function applyCustomPlaylistCoverBlob(playlist, blob){
+  if (!playlist || !blob || !window.URL?.createObjectURL) return false;
+
+  releaseCustomPlaylistCoverUrl(playlist);
+  playlist.customCoverUrl = window.URL.createObjectURL(blob);
+  playlist.hasCustomCover = true;
+  return true;
+}
+
+function refreshCustomPlaylistCoverUI(){
+  renderCustomPlaylists();
+
+  if (getCustomPlaylistRecord(state.activePlaylistId)){
+    updateHeroDetails();
+  }
+
+  updatePlaylistActions();
+}
+
+async function hydrateCustomPlaylistCovers(){
+  if (!window.indexedDB || !window.URL?.createObjectURL) return;
+
+  const hydrationToken = ++playlistCoverHydrationToken;
+
+  try {
+    const storedCovers = await readAllStoredPlaylistCovers();
+    if (hydrationToken !== playlistCoverHydrationToken) return;
+
+    state.customPlaylists.forEach(playlist => {
+      releaseCustomPlaylistCoverUrl(playlist);
+      playlist.hasCustomCover = false;
+    });
+
+    storedCovers.forEach(record => {
+      const playlist = getCustomPlaylistRecord(record?.playlistId);
+      const blob = record?.blob;
+
+      if (playlist && blob && typeof blob.size === "number" && blob.size > 0){
+        applyCustomPlaylistCoverBlob(playlist, blob);
+      }
+    });
+
+    refreshCustomPlaylistCoverUI();
+  } catch (error) {
+    console.warn("Musicozy could not load custom playlist covers:", error);
+  }
 }
 
 function escapeHtml(value){
@@ -1068,12 +1345,16 @@ function escapeHtml(value){
 }
 
 function renderCustomPlaylists(){
-  customPlaylistList.innerHTML = state.customPlaylists.map(playlist => `
-    <a href="#" class="playlist-item custom-playlist-item${playlist.id === state.activePlaylistId ? " active" : ""}${state.favoritePlaylists.has(playlist.id) ? " is-favorite" : ""}" data-playlist-id="${playlist.id}">
-      <span class="material-symbols-rounded">queue_music</span>
-      <span class="custom-playlist-name">${escapeHtml(playlist.name)}</span>
-    </a>
-  `).join("");
+  customPlaylistList.innerHTML = state.customPlaylists.map(playlist => {
+    const cover = escapeHtml(getCustomPlaylistCover(playlist));
+
+    return `
+      <a href="#" class="playlist-item custom-playlist-item${playlist.id === state.activePlaylistId ? " active" : ""}${state.favoritePlaylists.has(playlist.id) ? " is-favorite" : ""}" data-playlist-id="${playlist.id}">
+        <img class="custom-playlist-cover" src="${cover}" alt="">
+        <span class="custom-playlist-name">${escapeHtml(playlist.name)}</span>
+      </a>
+    `;
+  }).join("");
 }
 
 function closePlaylistActionsMenu(){
@@ -1179,9 +1460,10 @@ function createCustomPlaylistId(){
   return `custom-${Date.now()}-${randomPart}`;
 }
 
-function openPlaylistModal(playlistId = null){
+function openPlaylistModal(playlistId = null, returnFocusElement = document.activeElement){
   const playlist = getCustomPlaylistRecord(playlistId);
   editingPlaylistId = playlist?.id || null;
+  playlistModalReturnFocus = returnFocusElement;
 
   playlistDialogTitle.textContent = editingPlaylistId ? "Rename playlist" : "Create a playlist";
   playlistDialogCopy.textContent = editingPlaylistId
@@ -1189,22 +1471,29 @@ function openPlaylistModal(playlistId = null){
     : "Give your new playlist a name, then use the + beside any song to add it.";
   playlistSubmitBtn.textContent = editingPlaylistId ? "Save" : "Create";
   playlistModal.hidden = false;
+  syncDialogBackgroundInert();
   playlistNameInput.value = playlist?.name || "";
   playlistNameError.textContent = "";
   closePlaylistActionsMenu();
   closeTrackSortMenu();
   setTimeout(() => {
+    if (playlistModal.hidden) return;
     playlistNameInput.focus();
     if (editingPlaylistId) playlistNameInput.select();
   }, 0);
 }
 
 function closePlaylistModal(){
+  if (playlistModal.hidden) return;
+
+  const returnFocusElement = playlistModalReturnFocus;
   playlistModal.hidden = true;
   editingPlaylistId = null;
+  playlistModalReturnFocus = null;
   playlistNameInput.value = "";
   playlistNameError.textContent = "";
-  createPlaylistBtn.focus();
+  syncDialogBackgroundInert();
+  restoreDialogFocus(returnFocusElement, createPlaylistBtn);
 }
 
 function createCustomPlaylist(playlistName){
@@ -1231,6 +1520,8 @@ function createCustomPlaylist(playlistName){
     id,
     name,
     cover: `https://picsum.photos/seed/${id}/300/300`,
+    customCoverUrl: null,
+    hasCustomCover: false,
     trackIndices: []
   };
 
@@ -1296,6 +1587,8 @@ function deleteCustomPlaylist(playlistId){
   const activePlaylistWasDeleted = state.activePlaylistId === playlistId;
   const playingPlaylistWasDeleted = state.playingPlaylistId === playlistId;
 
+  releaseCustomPlaylistCoverUrl(playlist);
+  playlistCoverHydrationToken += 1;
   state.customPlaylists = state.customPlaylists.filter(item => item.id !== playlistId);
   state.favoritePlaylists.delete(playlistId);
   delete state.playlistSorts[playlistId];
@@ -1304,6 +1597,12 @@ function deleteCustomPlaylist(playlistId){
   savePlaylistSorts();
   closePlaylistActionsMenu();
   renderCustomPlaylists();
+
+  if (window.indexedDB){
+    deleteStoredPlaylistCover(playlistId)
+      .then(() => notifyPlaylistCoverChange(playlistId))
+      .catch(error => console.warn("Musicozy could not delete the playlist cover:", error));
+  }
 
   if (activePlaylistWasDeleted){
     state.activePlaylistId = "late-night-drive";
@@ -1320,6 +1619,287 @@ function deleteCustomPlaylist(playlistId){
   }
 
   return true;
+}
+
+// ======================== CUSTOM PLAYLIST COVERS ========================
+function setPlaylistCoverError(message = ""){
+  playlistCoverError.textContent = message;
+}
+
+function releaseCoverEditorPreviewUrl(){
+  if (!coverEditorPreviewUrl) return;
+  window.URL?.revokeObjectURL?.(coverEditorPreviewUrl);
+  coverEditorPreviewUrl = null;
+}
+
+function clearPlaylistCoverCanvas(){
+  const context = playlistCoverCanvas.getContext?.("2d");
+  context?.clearRect(0, 0, playlistCoverCanvas.width, playlistCoverCanvas.height);
+}
+
+function resetPlaylistCoverEditor(){
+  coverEditorLoadToken += 1;
+  releaseCoverEditorPreviewUrl();
+  coverEditorImage = null;
+  coverEditorZoom = 1;
+  coverEditorOffsetX = 0;
+  coverEditorOffsetY = 0;
+  coverEditorIsDragging = false;
+  coverEditorPointerId = null;
+  playlistCoverInput.value = "";
+  playlistCoverZoom.value = "1";
+  playlistCoverEditor.hidden = true;
+  playlistCoverCanvas.classList.remove("is-dragging");
+  playlistCoverChooseLabel.textContent = "Choose image";
+  playlistCoverSaveBtn.disabled = true;
+  playlistCoverSaveBtn.textContent = "Save cover";
+  setPlaylistCoverError();
+  clearPlaylistCoverCanvas();
+}
+
+function drawPlaylistCoverPreview(){
+  if (!coverEditorImage) return;
+
+  const context = playlistCoverCanvas.getContext?.("2d");
+  if (!context){
+    setPlaylistCoverError("This browser could not create the cover preview.");
+    return;
+  }
+
+  const canvasWidth = playlistCoverCanvas.width;
+  const canvasHeight = playlistCoverCanvas.height;
+  const imageWidth = coverEditorImage.naturalWidth || coverEditorImage.width;
+  const imageHeight = coverEditorImage.naturalHeight || coverEditorImage.height;
+
+  if (!imageWidth || !imageHeight) return;
+
+  const baseScale = Math.max(canvasWidth / imageWidth, canvasHeight / imageHeight);
+  const scale = baseScale * coverEditorZoom;
+  const drawWidth = imageWidth * scale;
+  const drawHeight = imageHeight * scale;
+  const maxOffsetX = Math.max(0, (drawWidth - canvasWidth) / 2);
+  const maxOffsetY = Math.max(0, (drawHeight - canvasHeight) / 2);
+
+  coverEditorOffsetX = Math.min(maxOffsetX, Math.max(-maxOffsetX, coverEditorOffsetX));
+  coverEditorOffsetY = Math.min(maxOffsetY, Math.max(-maxOffsetY, coverEditorOffsetY));
+
+  const drawX = (canvasWidth - drawWidth) / 2 + coverEditorOffsetX;
+  const drawY = (canvasHeight - drawHeight) / 2 + coverEditorOffsetY;
+
+  context.clearRect(0, 0, canvasWidth, canvasHeight);
+  context.fillStyle = "#090909";
+  context.fillRect(0, 0, canvasWidth, canvasHeight);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(coverEditorImage, drawX, drawY, drawWidth, drawHeight);
+}
+
+function setCoverEditorImage(image, previewUrl = null){
+  releaseCoverEditorPreviewUrl();
+  coverEditorPreviewUrl = previewUrl;
+  coverEditorImage = image;
+  coverEditorZoom = 1;
+  coverEditorOffsetX = 0;
+  coverEditorOffsetY = 0;
+  playlistCoverZoom.value = "1";
+  playlistCoverEditor.hidden = false;
+  playlistCoverChooseLabel.textContent = "Choose another image";
+  playlistCoverSaveBtn.disabled = false;
+  setPlaylistCoverError();
+  drawPlaylistCoverPreview();
+}
+
+function loadCoverEditorImage(sourceUrl, { ownedPreviewUrl = false } = {}){
+  return new Promise((resolve, reject) => {
+    const loadToken = ++coverEditorLoadToken;
+    const image = new window.Image();
+    image.decoding = "async";
+
+    image.onload = () => {
+      if (loadToken !== coverEditorLoadToken){
+        if (ownedPreviewUrl) window.URL?.revokeObjectURL?.(sourceUrl);
+        resolve(false);
+        return;
+      }
+
+      setCoverEditorImage(image, ownedPreviewUrl ? sourceUrl : null);
+      resolve(true);
+    };
+
+    image.onerror = () => {
+      if (ownedPreviewUrl) window.URL?.revokeObjectURL?.(sourceUrl);
+      if (loadToken === coverEditorLoadToken){
+        setPlaylistCoverError("That image could not be opened. Try a different JPG, PNG or WebP file.");
+      }
+      reject(new Error("The selected cover image could not be decoded."));
+    };
+
+    image.src = sourceUrl;
+  });
+}
+
+function openPlaylistCoverModal(playlistId, returnFocusElement = playlistMoreBtn){
+  const playlist = getCustomPlaylistRecord(playlistId);
+  if (!playlist) return;
+
+  resetPlaylistCoverEditor();
+  coverEditorPlaylistId = playlistId;
+  playlistCoverModalReturnFocus = returnFocusElement;
+  playlistCoverDialogTitle.textContent = `Change ${playlist.name} cover`;
+  playlistCoverModal.hidden = false;
+  closePlaylistActionsMenu();
+  closeTrackSortMenu();
+  syncDialogBackgroundInert();
+
+  if (playlist.hasCustomCover && playlist.customCoverUrl){
+    loadCoverEditorImage(playlist.customCoverUrl).catch(() => {});
+  }
+
+  setTimeout(() => {
+    if (!playlistCoverModal.hidden) playlistCoverChooseBtn.focus();
+  }, 0);
+}
+
+function closePlaylistCoverModal(){
+  if (playlistCoverModal.hidden) return;
+
+  const returnFocusElement = playlistCoverModalReturnFocus;
+  playlistCoverModal.hidden = true;
+  playlistCoverModalReturnFocus = null;
+  coverEditorPlaylistId = null;
+  resetPlaylistCoverEditor();
+  syncDialogBackgroundInert();
+  restoreDialogFocus(returnFocusElement, playlistMoreBtn);
+}
+
+function handlePlaylistCoverFile(){
+  const file = playlistCoverInput.files?.[0];
+  if (!file) return;
+
+  const supportedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!supportedTypes.has(file.type)){
+    setPlaylistCoverError("Choose a JPG, PNG or WebP image.");
+    playlistCoverInput.value = "";
+    return;
+  }
+
+  if (file.size > MAX_PLAYLIST_COVER_FILE_SIZE){
+    setPlaylistCoverError("Choose an image smaller than 10 MB.");
+    playlistCoverInput.value = "";
+    return;
+  }
+
+  if (!window.URL?.createObjectURL){
+    setPlaylistCoverError("This browser cannot preview local images.");
+    return;
+  }
+
+  setPlaylistCoverError();
+  const previewUrl = window.URL.createObjectURL(file);
+  loadCoverEditorImage(previewUrl, { ownedPreviewUrl: true }).catch(() => {});
+  playlistCoverInput.value = "";
+}
+
+function exportPlaylistCoverBlob(){
+  return new Promise((resolve, reject) => {
+    try {
+      playlistCoverCanvas.toBlob(blob => {
+        if (blob) resolve(blob);
+        else reject(new Error("The cropped cover could not be created."));
+      }, "image/webp", 0.9);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function saveEditedPlaylistCover(){
+  const playlist = getCustomPlaylistRecord(coverEditorPlaylistId);
+  if (!playlist || !coverEditorImage || playlistCoverSaveBtn.disabled) return;
+
+  playlistCoverSaveBtn.disabled = true;
+  playlistCoverSaveBtn.textContent = "Saving…";
+  setPlaylistCoverError();
+
+  try {
+    const coverBlob = await exportPlaylistCoverBlob();
+    await saveStoredPlaylistCover(playlist.id, coverBlob);
+
+    playlistCoverHydrationToken += 1;
+    applyCustomPlaylistCoverBlob(playlist, coverBlob);
+    notifyPlaylistCoverChange(playlist.id);
+    refreshCustomPlaylistCoverUI();
+    closePlaylistCoverModal();
+  } catch (error) {
+    console.warn("Musicozy could not save the playlist cover:", error);
+    setPlaylistCoverError("The cover could not be saved in this browser. Please try again.");
+    playlistCoverSaveBtn.disabled = false;
+    playlistCoverSaveBtn.textContent = "Save cover";
+  }
+}
+
+async function removeCustomPlaylistCover(playlistId){
+  const playlist = getCustomPlaylistRecord(playlistId);
+  if (!playlist?.hasCustomCover) return false;
+
+  closePlaylistActionsMenu();
+
+  try {
+    await deleteStoredPlaylistCover(playlistId);
+    playlistCoverHydrationToken += 1;
+    releaseCustomPlaylistCoverUrl(playlist);
+    playlist.hasCustomCover = false;
+    notifyPlaylistCoverChange(playlistId);
+    refreshCustomPlaylistCoverUI();
+    restoreDialogFocus(playlistMoreBtn, playlistMoreBtn);
+    return true;
+  } catch (error) {
+    console.warn("Musicozy could not remove the playlist cover:", error);
+    showPlaybackStatus("The custom cover could not be removed. Please try again.", { duration: 5000 });
+    return false;
+  }
+}
+
+function movePlaylistCoverCrop(deltaX, deltaY){
+  if (!coverEditorImage) return;
+  coverEditorOffsetX += deltaX;
+  coverEditorOffsetY += deltaY;
+  drawPlaylistCoverPreview();
+}
+
+function startPlaylistCoverDrag(event){
+  if (!coverEditorImage || (event.pointerType === "mouse" && event.button !== 0)) return;
+
+  coverEditorIsDragging = true;
+  coverEditorPointerId = event.pointerId;
+  coverEditorDragStartX = event.clientX;
+  coverEditorDragStartY = event.clientY;
+  coverEditorDragOriginX = coverEditorOffsetX;
+  coverEditorDragOriginY = coverEditorOffsetY;
+  playlistCoverCanvas.classList.add("is-dragging");
+  playlistCoverCanvas.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+}
+
+function updatePlaylistCoverDrag(event){
+  if (!coverEditorIsDragging || event.pointerId !== coverEditorPointerId) return;
+
+  const rect = playlistCoverCanvas.getBoundingClientRect();
+  const displayWidth = rect.width || playlistCoverCanvas.width;
+  const canvasScale = playlistCoverCanvas.width / displayWidth;
+  coverEditorOffsetX = coverEditorDragOriginX + (event.clientX - coverEditorDragStartX) * canvasScale;
+  coverEditorOffsetY = coverEditorDragOriginY + (event.clientY - coverEditorDragStartY) * canvasScale;
+  drawPlaylistCoverPreview();
+  event.preventDefault();
+}
+
+function finishPlaylistCoverDrag(event){
+  if (!coverEditorIsDragging || event.pointerId !== coverEditorPointerId) return;
+
+  coverEditorIsDragging = false;
+  coverEditorPointerId = null;
+  playlistCoverCanvas.classList.remove("is-dragging");
+  playlistCoverCanvas.releasePointerCapture?.(event.pointerId);
 }
 
 // ======================== ADD SONGS TO PLAYLISTS ========================
@@ -1393,19 +1973,34 @@ function renderPlaylistDestinations(){
   }
 }
 
-function openAddToPlaylistModal(trackIndex){
+function openAddToPlaylistModal(trackIndex, returnFocusElement = document.activeElement){
   if (!Number.isInteger(trackIndex) || !tracks[trackIndex]) return;
 
   destinationTrackIndex = trackIndex;
+  addToPlaylistModalReturnFocus = returnFocusElement;
   destinationTrackName.textContent = `${tracks[trackIndex].title} — ${tracks[trackIndex].artist}`;
   renderPlaylistDestinations();
   hidePlaylistToast();
   addToPlaylistModal.hidden = false;
+  syncDialogBackgroundInert();
+
+  setTimeout(() => {
+    if (addToPlaylistModal.hidden) return;
+    const firstDestination = playlistDestinationList.querySelector('[data-destination-id]');
+    const closeButton = addToPlaylistModal.querySelector('.playlist-dialog-close');
+    (firstDestination || closeButton)?.focus();
+  }, 0);
 }
 
 function closeAddToPlaylistModal(){
+  if (addToPlaylistModal.hidden) return;
+
+  const returnFocusElement = addToPlaylistModalReturnFocus;
   addToPlaylistModal.hidden = true;
   destinationTrackIndex = null;
+  addToPlaylistModalReturnFocus = null;
+  syncDialogBackgroundInert();
+  restoreDialogFocus(returnFocusElement, likeBtn);
 }
 
 function toggleTrackInCustomPlaylist(playlistId, trackIndex){
@@ -1442,6 +2037,9 @@ function togglePlaylistDestination(destinationId){
   }
 
   renderPlaylistDestinations();
+  playlistDestinationList
+    .querySelector(`[data-destination-id="${destinationId}"]`)
+    ?.focus();
 }
 
 // ======================== PLAYLIST VIEW ========================
@@ -1562,7 +2160,7 @@ function renderTrackList(query = ""){
       const trackIndex = Number(button.dataset.addIndex);
 
       if (button.dataset.playlistAction === "manage"){
-        openAddToPlaylistModal(trackIndex);
+        openAddToPlaylistModal(trackIndex, button);
         return;
       }
 
@@ -2007,11 +2605,24 @@ playlistMoreBtn.addEventListener('click', event => {
   }
 });
 
+changePlaylistCoverAction.addEventListener('click', event => {
+  event.stopPropagation();
+  const playlistId = state.activePlaylistId;
+  if (getCustomPlaylistRecord(playlistId)){
+    openPlaylistCoverModal(playlistId, playlistMoreBtn);
+  }
+});
+
+removePlaylistCoverAction.addEventListener('click', event => {
+  event.stopPropagation();
+  removeCustomPlaylistCover(state.activePlaylistId);
+});
+
 renamePlaylistAction.addEventListener('click', event => {
   event.stopPropagation();
   const playlistId = state.activePlaylistId;
   closePlaylistActionsMenu();
-  if (getCustomPlaylistRecord(playlistId)) openPlaylistModal(playlistId);
+  if (getCustomPlaylistRecord(playlistId)) openPlaylistModal(playlistId, playlistMoreBtn);
 });
 
 deletePlaylistAction.addEventListener('click', event => {
@@ -2057,7 +2668,9 @@ document.addEventListener('click', event => {
 });
 
 // Create/rename playlist and destination dialogs.
-createPlaylistBtn.addEventListener('click', () => openPlaylistModal());
+createPlaylistBtn.addEventListener('click', event => {
+  openPlaylistModal(null, event.currentTarget);
+});
 
 playlistForm.addEventListener('submit', event => {
   event.preventDefault();
@@ -2078,6 +2691,39 @@ addToPlaylistModal.querySelectorAll('[data-close-add-to-playlist]').forEach(cont
   control.addEventListener('click', closeAddToPlaylistModal);
 });
 
+playlistCoverModal.querySelectorAll('[data-close-playlist-cover]').forEach(control => {
+  control.addEventListener('click', closePlaylistCoverModal);
+});
+
+playlistCoverChooseBtn.addEventListener('click', () => {
+  playlistCoverInput.value = "";
+  playlistCoverInput.click();
+});
+playlistCoverInput.addEventListener('change', handlePlaylistCoverFile);
+playlistCoverZoom.addEventListener('input', () => {
+  coverEditorZoom = Math.min(3, Math.max(1, Number(playlistCoverZoom.value) || 1));
+  drawPlaylistCoverPreview();
+});
+playlistCoverSaveBtn.addEventListener('click', saveEditedPlaylistCover);
+playlistCoverCanvas.addEventListener('pointerdown', startPlaylistCoverDrag);
+playlistCoverCanvas.addEventListener('pointermove', updatePlaylistCoverDrag);
+playlistCoverCanvas.addEventListener('pointerup', finishPlaylistCoverDrag);
+playlistCoverCanvas.addEventListener('pointercancel', finishPlaylistCoverDrag);
+playlistCoverCanvas.addEventListener('keydown', event => {
+  const distance = event.shiftKey ? 45 : 15;
+  let deltaX = 0;
+  let deltaY = 0;
+
+  if (event.key === 'ArrowLeft') deltaX = -distance;
+  else if (event.key === 'ArrowRight') deltaX = distance;
+  else if (event.key === 'ArrowUp') deltaY = -distance;
+  else if (event.key === 'ArrowDown') deltaY = distance;
+  else return;
+
+  event.preventDefault();
+  movePlaylistCoverCrop(deltaX, deltaY);
+});
+
 playlistDestinationList.addEventListener('click', event => {
   const option = event.target.closest?.('[data-destination-id]');
   if (!option) return;
@@ -2085,19 +2731,34 @@ playlistDestinationList.addEventListener('click', event => {
 });
 
 playlistToastChange.addEventListener('click', () => {
-  openAddToPlaylistModal(destinationTrackIndex);
+  openAddToPlaylistModal(destinationTrackIndex, likeBtn);
 });
 
-// Escape closes the topmost open dialog, drawer or menu.
+// Keep Tab inside an open dialog; Escape closes the topmost overlay.
 document.addEventListener('keydown', event => {
+  const openModal = getOpenPlaylistModal();
+
+  if (event.key === 'Tab' && openModal){
+    trapFocusInsideDialog(event, openModal);
+    return;
+  }
+
   if (event.key !== 'Escape') return;
 
+  if (!playlistCoverModal.hidden){
+    event.preventDefault();
+    closePlaylistCoverModal();
+    return;
+  }
+
   if (!addToPlaylistModal.hidden){
+    event.preventDefault();
     closeAddToPlaylistModal();
     return;
   }
 
   if (!playlistModal.hidden){
+    event.preventDefault();
     closePlaylistModal();
     return;
   }
@@ -2240,8 +2901,10 @@ window.addEventListener('storage', event => {
     const activePlaylistWasCustom = state.activePlaylistId.startsWith('custom-');
     const playingPlaylistWasCustom = state.playingPlaylistId.startsWith('custom-');
 
+    releaseAllCustomPlaylistCoverUrls();
     state.customPlaylists = readCustomPlaylists();
     renderCustomPlaylists();
+    hydrateCustomPlaylistCovers();
 
     if (!addToPlaylistModal.hidden && Number.isInteger(destinationTrackIndex)){
       renderPlaylistDestinations();
@@ -2260,6 +2923,10 @@ window.addEventListener('storage', event => {
       }
       updateNowPlayingPanel();
     }
+  }
+
+  if (event.key === CUSTOM_PLAYLIST_COVER_SYNC_KEY){
+    hydrateCustomPlaylistCovers();
   }
 });
 
@@ -2409,6 +3076,7 @@ document.addEventListener('pointermove', (e) => {
 const restoredPlaybackSession = restorePlaybackSession();
 renderCustomPlaylists();
 updatePlaylistView();
+hydrateCustomPlaylistCovers();
 preloadDurations();
 setVolume(restoredPlaybackSession.volume, { save: false });
 loadTrack(
