@@ -875,8 +875,13 @@ function updateHeroPlayIcon(){
 
 function updateLikeButtons(){
   const isLiked = state.liked.has(state.currentIndex);
-  likeBtn.classList.toggle('is-liked', isLiked);
-  panelLikeBtn.classList.toggle('is-liked', isLiked);
+  const label = isLiked ? 'Remove from Liked Songs' : 'Like song';
+
+  [likeBtn, panelLikeBtn].forEach(button => {
+    button.classList.toggle('is-liked', isLiked);
+    button.setAttribute('aria-pressed', String(isLiked));
+    button.setAttribute('aria-label', label);
+  });
 }
 
 function updateNowPlayingPanel(){
@@ -1514,7 +1519,13 @@ function renderTrackList(query = ""){
   }
 
   trackListEl.innerHTML = matchingTracks.map(({ track: t, trackIndex }, displayPosition) => `
-    <div class="track-row" data-index="${trackIndex}">
+    <div
+      class="track-row"
+      data-index="${trackIndex}"
+      tabindex="0"
+      role="button"
+      aria-label="Play ${t.title} by ${t.artist}"
+    >
       <span class="col-index">
         <span class="idx-num">${displayPosition + 1}</span>
         <span class="eq"><span></span><span></span><span></span><span></span></span>
@@ -1559,16 +1570,28 @@ function renderTrackList(query = ""){
     });
   });
 
+  const activateTrackRow = row => {
+    const idx = Number(row.dataset.index);
+    const selectedPlaylistIsPlaying = state.activePlaylistId === state.playingPlaylistId;
+
+    if (idx === state.currentIndex && selectedPlaylistIsPlaying){
+      togglePlay();
+    } else {
+      state.playingPlaylistId = state.activePlaylistId;
+      loadTrack(idx, true);
+    }
+  };
+
   trackListEl.querySelectorAll('.track-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const idx = Number(row.dataset.index);
-      const selectedPlaylistIsPlaying = state.activePlaylistId === state.playingPlaylistId;
-      if (idx === state.currentIndex && selectedPlaylistIsPlaying){
-        togglePlay();
-      } else {
-        state.playingPlaylistId = state.activePlaylistId;
-        loadTrack(idx, true);
-      }
+    row.addEventListener('click', () => activateTrackRow(row));
+    row.addEventListener('keydown', event => {
+      const isActivationKey =
+        event.key === 'Enter' || event.key === ' ' || event.code === 'Space';
+
+      if (event.target !== row || !isActivationKey) return;
+
+      event.preventDefault();
+      activateTrackRow(row);
     });
   });
 
