@@ -267,6 +267,14 @@ button:focus-visible, a:focus-visible{
   align-items:center;
   gap:8px;
 }
+.custom-playlist-cover{
+  width:24px;
+  height:24px;
+  flex-shrink:0;
+  border-radius:4px;
+  object-fit:cover;
+  background:var(--surface-raised);
+}
 .custom-playlist-item .material-symbols-rounded{
   flex-shrink:0;
   color:var(--amber);
@@ -420,6 +428,93 @@ button:focus-visible, a:focus-visible{
   background:var(--amber);
 }
 .dialog-btn-primary:hover{ background:var(--amber-bright); }
+.dialog-btn:disabled{
+  cursor:not-allowed;
+  opacity:.45;
+}
+.dialog-btn-primary:disabled:hover{ background:var(--amber); }
+
+/* ======================== PLAYLIST COVER EDITOR ======================== */
+.playlist-cover-dialog{ width:min(480px, 100%); }
+.cover-choose-btn{
+  width:100%;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  margin-top:18px;
+  padding:10px 16px;
+  color:var(--text);
+  background:var(--surface-raised);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  font-size:13px;
+  font-weight:700;
+  transition:background .15s ease, border-color .15s ease;
+}
+.cover-choose-btn:hover{
+  background:var(--surface-hover);
+  border-color:var(--amber-dim);
+}
+.cover-choose-btn .material-symbols-rounded{
+  color:var(--amber);
+  font-size:20px;
+}
+.playlist-cover-editor{
+  margin-top:16px;
+}
+.playlist-cover-editor[hidden]{ display:none; }
+.playlist-cover-canvas-wrap{
+  width:min(300px, 100%);
+  aspect-ratio:1;
+  margin-inline:auto;
+  overflow:hidden;
+  background:#090909;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:0 16px 34px rgba(0,0,0,.38);
+}
+#playlist-cover-canvas{
+  width:100%;
+  height:100%;
+  display:block;
+  cursor:grab;
+  touch-action:none;
+  outline:none;
+}
+#playlist-cover-canvas.is-dragging{ cursor:grabbing; }
+#playlist-cover-canvas:focus-visible{
+  box-shadow:inset 0 0 0 3px var(--amber);
+}
+.cover-zoom-control{
+  display:grid;
+  grid-template-columns:auto minmax(0, 1fr);
+  align-items:center;
+  gap:12px;
+  margin-top:16px;
+  color:var(--text-muted);
+  font-size:12px;
+  font-weight:700;
+}
+.cover-zoom-control input{
+  width:100%;
+  accent-color:var(--amber);
+  cursor:pointer;
+}
+.cover-editor-help{
+  margin-top:8px;
+  color:var(--text-faint);
+  font-size:11.5px;
+  line-height:1.45;
+  text-align:center;
+}
+.playlist-cover-error{
+  min-height:18px;
+  margin-top:8px;
+  color:#e36b6b;
+  font-size:11.5px;
+}
 
 /* ======================== ADD-TO-PLAYLIST DIALOG ======================== */
 .add-to-playlist-dialog{
@@ -1119,7 +1214,7 @@ button:focus-visible, a:focus-visible{
   top:calc(100% + 8px);
   left:0;
   z-index:40;
-  width:182px;
+  width:220px;
   padding:5px;
   background:#211e23;
   border:1px solid var(--border);
@@ -1127,6 +1222,7 @@ button:focus-visible, a:focus-visible{
   box-shadow:0 14px 34px rgba(0,0,0,.55);
 }
 .playlist-actions-menu[hidden]{ display:none; }
+.playlist-actions-menu button[hidden]{ display:none; }
 .playlist-actions-menu button{
   width:100%;
   display:flex;
@@ -2013,6 +2109,14 @@ button:focus-visible, a:focus-visible{
     border-radius:14px;
   }
   .track-sort-menu{
+    position:fixed;
+    left:12px;
+    right:12px;
+    top:auto;
+    bottom:116px;
+    width:auto;
+  }
+  .playlist-actions-menu{
     position:fixed;
     left:12px;
     right:12px;
