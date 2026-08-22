@@ -78,7 +78,7 @@
           aria-controls="sidebar"
           aria-expanded="false"
         ><span class="material-symbols-rounded">menu</span></button>
-        <button class="round-btn has-tooltip" data-tooltip="Home" data-tooltip-variant="dark" aria-label="Home"><span class="material-symbols-rounded">home</span></button>
+        <button class="round-btn has-tooltip" type="button" data-tooltip="Home" data-tooltip-variant="dark" aria-label="Home"><span class="material-symbols-rounded">home</span></button>
         <div class="search-bar">
           <span class="material-symbols-rounded search-icon has-tooltip" data-tooltip="Search" data-tooltip-variant="dark">search</span>
           <input type="text" class="search-input" id="search-input" placeholder="What do you want to play?" aria-label="Search songs" autocomplete="off">
@@ -86,22 +86,22 @@
             <span class="material-symbols-rounded">close</span>
           </button>
           <span class="search-divider">|</span>
-          <button class="browse-btn has-tooltip" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse">
+          <button class="browse-btn has-tooltip" type="button" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse">
             <span class="material-symbols-rounded browse-icon">grid_view</span>
           </button>
         </div>
       </div>
       <!-- Premium overlaps the panel boundary by one quarter of its width. -->
-      <button class="premium-btn has-tooltip" data-tooltip="Upgrade to Premium">Explore Premium</button>
+      <button class="premium-btn has-tooltip" type="button" data-tooltip="Upgrade to Premium">Explore Premium</button>
     </div>
 
     <!-- Now Playing controls: Install, Notifications and profile -->
     <div class="now-playing-nav-zone">
-      <button class="install-btn">
+      <button class="install-btn" type="button">
         <span class="material-symbols-rounded">download</span>
         Install App
       </button>
-      <button class="icon-btn bell-btn has-tooltip" data-tooltip="What's New" data-tooltip-variant="dark" aria-label="Notifications">
+      <button class="icon-btn bell-btn has-tooltip" type="button" data-tooltip="What's New" data-tooltip-variant="dark" aria-label="Notifications">
         <span class="bell-dot"></span><span class="material-symbols-rounded">notifications</span>
       </button>
       <div class="header-user">
@@ -128,7 +128,7 @@
 
       <!-- Playlist play, favorite and management actions -->
       <div class="action-row">
-        <button class="play-pill" id="hero-play" aria-label="Play playlist">
+        <button class="play-pill" id="hero-play" type="button" aria-label="Play playlist">
           <span class="material-symbols-rounded" id="hero-play-icon">play_arrow</span>
         </button>
         <button
@@ -249,7 +249,7 @@
           <p class="now-playing-title" id="now-playing-title">Synth Wave by Alex</p>
           <p class="now-playing-artist" id="now-playing-artist">Alex McCulloch</p>
         </div>
-        <button class="icon-btn panel-like-btn" id="panel-like-btn" aria-label="Like current song">
+        <button class="icon-btn panel-like-btn" id="panel-like-btn" type="button" aria-label="Like song" aria-pressed="false">
           <span class="material-symbols-rounded">favorite</span>
         </button>
       </div>
@@ -292,7 +292,7 @@
       <p class="np-title" id="bar-title">—</p>
       <p class="np-artist" id="bar-artist">—</p>
     </div>
-    <button class="icon-btn like-btn" id="like-btn" type="button" aria-label="Like song">
+    <button class="icon-btn like-btn" id="like-btn" type="button" aria-label="Like song" aria-pressed="false">
       <span class="material-symbols-rounded">favorite</span>
     </button>
   </div>
@@ -465,6 +465,7 @@
 <!-- Shared tooltip used by the navbar, brand and player controls. -->
 <div id="cursor-tooltip" class="cursor-tooltip"></div>
 
+<!-- Keep this filename unchanged when replacing the JavaScript file. -->
 <script src="script.js"></script>
 </body>
 </html>
