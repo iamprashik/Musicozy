@@ -148,6 +148,14 @@
             aria-expanded="false"
           ><span class="material-symbols-rounded">more_horiz</span></button>
           <div class="playlist-actions-menu" id="playlist-actions-menu" role="menu" hidden>
+            <button id="change-playlist-cover-action" type="button" role="menuitem">
+              <span class="material-symbols-rounded">image</span>
+              <span>Change cover</span>
+            </button>
+            <button id="remove-playlist-cover-action" type="button" role="menuitem" hidden>
+              <span class="material-symbols-rounded">hide_image</span>
+              <span>Remove custom cover</span>
+            </button>
             <button id="rename-playlist-action" type="button" role="menuitem">
               <span class="material-symbols-rounded">edit</span>
               <span>Rename playlist</span>
@@ -447,6 +455,66 @@
 
     <div class="playlist-dialog-actions">
       <button class="dialog-btn dialog-btn-primary" type="button" data-close-add-to-playlist>Done</button>
+    </div>
+  </section>
+</div>
+
+<!-- Upload, preview and crop artwork for a custom playlist -->
+<div class="playlist-modal" id="playlist-cover-modal" hidden>
+  <div class="playlist-modal-backdrop" data-close-playlist-cover></div>
+  <section
+    class="playlist-dialog playlist-cover-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="playlist-cover-dialog-title"
+    aria-describedby="playlist-cover-dialog-copy"
+  >
+    <div class="playlist-dialog-header">
+      <div>
+        <p class="playlist-dialog-kicker">Playlist artwork</p>
+        <h2 id="playlist-cover-dialog-title">Change cover</h2>
+      </div>
+      <button class="playlist-dialog-close" type="button" aria-label="Close" data-close-playlist-cover>
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+
+    <p class="playlist-dialog-copy" id="playlist-cover-dialog-copy">Choose a JPG, PNG or WebP image, then drag and zoom it into a square.</p>
+
+    <input
+      id="playlist-cover-input"
+      type="file"
+      accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+      hidden
+    >
+    <button class="cover-choose-btn" id="playlist-cover-choose-btn" type="button">
+      <span class="material-symbols-rounded">upload</span>
+      <span id="playlist-cover-choose-label">Choose image</span>
+    </button>
+
+    <div class="playlist-cover-editor" id="playlist-cover-editor" hidden>
+      <div class="playlist-cover-canvas-wrap">
+        <canvas
+          id="playlist-cover-canvas"
+          width="600"
+          height="600"
+          tabindex="0"
+          aria-label="Playlist cover crop preview. Drag the image or use the arrow keys to reposition it."
+        ></canvas>
+      </div>
+
+      <label class="cover-zoom-control" for="playlist-cover-zoom">
+        <span>Zoom</span>
+        <input id="playlist-cover-zoom" type="range" min="1" max="3" step="0.05" value="1">
+      </label>
+      <p class="cover-editor-help">Drag the preview to reposition it. You can also use the arrow keys.</p>
+    </div>
+
+    <p class="playlist-cover-error" id="playlist-cover-error" role="alert"></p>
+
+    <div class="playlist-dialog-actions">
+      <button class="dialog-btn dialog-btn-secondary" type="button" data-close-playlist-cover>Cancel</button>
+      <button class="dialog-btn dialog-btn-primary" id="playlist-cover-save-btn" type="button" disabled>Save cover</button>
     </div>
   </section>
 </div>
