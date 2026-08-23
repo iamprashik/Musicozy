@@ -6,55 +6,43 @@
 
 // ======================== TRACK DATA ========================
 // CC0 synthwave tracks from OpenGameArt + placeholder artwork.
-// Source pages and artist credits are included with every track below.
+// See CREDITS.md for source pages, licenses and full artist credits.
 const tracks = [
   {
     title: "Synth Wave by Alex",
     artist: "Alex McCulloch",
     cover: "https://picsum.photos/seed/synthwavealex/300/300",
-    src: "https://opengameart.org/sites/default/files/80s_song_mastered_0.mp3",
-    license: "CC0",
-    sourcePage: "https://opengameart.org/content/synth-wave-by-alex"
+    src: "https://opengameart.org/sites/default/files/80s_song_mastered_0.mp3"
   },
   {
     title: "Nighttime Solitude",
     artist: "celestialghost8",
     cover: "https://picsum.photos/seed/nighttimesolitude/300/300",
-    src: "https://opengameart.org/sites/default/files/Nighttime%20Solitude%20%5BCC0%5D.mp3",
-    license: "CC0",
-    sourcePage: "https://opengameart.org/content/nighttime-solitude"
+    src: "https://opengameart.org/sites/default/files/Nighttime%20Solitude%20%5BCC0%5D.mp3"
   },
   {
     title: "Synthwave 421k",
     artist: "The Cynic Project",
     cover: "https://picsum.photos/seed/synthwave421k/300/300",
-    src: "https://opengameart.org/sites/default/files/007_Synthwave_421k.mp3",
-    license: "CC0",
-    sourcePage: "https://opengameart.org/content/calm-relax-1-synthwave-421k"
+    src: "https://opengameart.org/sites/default/files/007_Synthwave_421k.mp3"
   },
   {
     title: "Synthwave 4k",
     artist: "The Cynic Project",
     cover: "https://picsum.photos/seed/synthwave4k/300/300",
-    src: "https://opengameart.org/sites/default/files/001_Synthwave_4k_0.mp3",
-    license: "CC0",
-    sourcePage: "https://opengameart.org/content/calm-ambient-1-synthwave-4k"
+    src: "https://opengameart.org/sites/default/files/001_Synthwave_4k_0.mp3"
   },
   {
     title: "Synthwave 15k",
     artist: "The Cynic Project",
     cover: "https://picsum.photos/seed/synthwave15k/300/300",
-    src: "https://opengameart.org/sites/default/files/002_Synthwave_15k.mp3",
-    license: "CC0",
-    sourcePage: "https://opengameart.org/content/calm-ambient-2-synthwave-15k"
+    src: "https://opengameart.org/sites/default/files/002_Synthwave_15k.mp3"
   },
   {
     title: "Synth Wave",
     artist: "Alex McCulloch",
     cover: "https://picsum.photos/seed/synthwaveretro/300/300",
-    src: "https://opengameart.org/sites/default/files/Synth%20Wave_0.mp3",
-    license: "CC0",
-    sourcePage: "https://opengameart.org/content/synth-wave"
+    src: "https://opengameart.org/sites/default/files/Synth%20Wave_0.mp3"
   }
 ];
 
@@ -470,7 +458,7 @@ const state = {
 const audio = document.getElementById('audio');
 const trackListEl = document.getElementById('track-list');
 const trackReorderStatus = document.getElementById('track-reorder-status');
-const searchInput = document.getElementById('search-input') || document.querySelector('.search-input');
+const searchInput = document.getElementById('search-input');
 const searchClearBtn = document.getElementById('search-clear-btn');
 const playlistsEl = document.querySelector('.playlists');
 const customPlaylistList = document.getElementById('custom-playlist-list');
@@ -532,14 +520,10 @@ const barArtist = document.getElementById('bar-artist');
 const likeBtn = document.getElementById('like-btn');
 
 // Playback, playlist-action and sorting controls.
-const homeBtn = document.getElementById('home-btn')
-  || document.querySelector('.main-nav-center > .round-btn');
-const browseBtn = document.getElementById('browse-btn')
-  || document.querySelector('.browse-btn');
-const notificationsBtn = document.getElementById('notifications-btn')
-  || document.querySelector('.bell-btn');
-const notificationDot = document.getElementById('notification-dot')
-  || notificationsBtn?.querySelector('.bell-dot');
+const homeBtn = document.getElementById('home-btn');
+const browseBtn = document.getElementById('browse-btn');
+const notificationsBtn = document.getElementById('notifications-btn');
+const notificationDot = document.getElementById('notification-dot');
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
 const heroPlayBtn = document.getElementById('hero-play');
@@ -597,14 +581,10 @@ const playbackStatusMessage = document.getElementById('playback-status-message')
 const playbackStatusClose = document.getElementById('playback-status-close');
 const cursorTooltip = document.getElementById('cursor-tooltip');
 const demoFeatureButtons = document.querySelectorAll('[data-demo-feature]');
-const navbarNotice = document.getElementById('navbar-notice')
-  || document.getElementById('demo-feature-toast');
-const navbarNoticeTitle = document.getElementById('navbar-notice-title')
-  || document.getElementById('demo-feature-title');
-const navbarNoticeMessage = document.getElementById('navbar-notice-message')
-  || document.getElementById('demo-feature-message');
-const navbarNoticeClose = document.getElementById('navbar-notice-close')
-  || document.getElementById('demo-feature-close');
+const navbarNotice = document.getElementById('demo-feature-toast');
+const navbarNoticeTitle = document.getElementById('demo-feature-title');
+const navbarNoticeMessage = document.getElementById('demo-feature-message');
+const navbarNoticeClose = document.getElementById('demo-feature-close');
 
 // Playback timers and transient runtime state.
 const failedPlaybackTrackIndices = new Set();
