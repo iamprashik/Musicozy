@@ -61,6 +61,12 @@ const tracks = [
 // ======================== PLAYLIST DATA ========================
 // The playlists currently reuse the verified CC0 tracks in different orders.
 const playlists = {
+  "browse-all": {
+    name: "Browse All Songs",
+    cover: "https://picsum.photos/seed/musicozybrowseall/300/300",
+    description: "Explore every CC0 song currently available in Musicozy.",
+    trackIndices: tracks.map((_track, trackIndex) => trackIndex)
+  },
   "liked-songs": {
     name: "Liked Songs",
     cover: "https://picsum.photos/seed/musicozylikedsongs/300/300",
@@ -405,6 +411,7 @@ function savePlaylistSorts(){
 // --- Playback session ---
 const PLAYBACK_SESSION_STORAGE_KEY = "musicozy-playback-session-v1";
 const DEFAULT_PLAYLIST_ID = "late-night-drive";
+const BROWSE_PLAYLIST_ID = "browse-all";
 const DEFAULT_VOLUME = 0.75;
 
 function readPlaybackSession(){
@@ -462,6 +469,7 @@ const state = {
 // Core media, search and library elements.
 const audio = document.getElementById('audio');
 const trackListEl = document.getElementById('track-list');
+const trackReorderStatus = document.getElementById('track-reorder-status');
 const searchInput = document.getElementById('search-input') || document.querySelector('.search-input');
 const searchClearBtn = document.getElementById('search-clear-btn');
 const playlistsEl = document.querySelector('.playlists');
@@ -524,6 +532,14 @@ const barArtist = document.getElementById('bar-artist');
 const likeBtn = document.getElementById('like-btn');
 
 // Playback, playlist-action and sorting controls.
+const homeBtn = document.getElementById('home-btn')
+  || document.querySelector('.main-nav-center > .round-btn');
+const browseBtn = document.getElementById('browse-btn')
+  || document.querySelector('.browse-btn');
+const notificationsBtn = document.getElementById('notifications-btn')
+  || document.querySelector('.bell-btn');
+const notificationDot = document.getElementById('notification-dot')
+  || notificationsBtn?.querySelector('.bell-dot');
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
 const heroPlayBtn = document.getElementById('hero-play');
@@ -580,18 +596,31 @@ const playbackStatusIcon = document.getElementById('playback-status-icon');
 const playbackStatusMessage = document.getElementById('playback-status-message');
 const playbackStatusClose = document.getElementById('playback-status-close');
 const cursorTooltip = document.getElementById('cursor-tooltip');
+const demoFeatureButtons = document.querySelectorAll('[data-demo-feature]');
+const navbarNotice = document.getElementById('navbar-notice')
+  || document.getElementById('demo-feature-toast');
+const navbarNoticeTitle = document.getElementById('navbar-notice-title')
+  || document.getElementById('demo-feature-title');
+const navbarNoticeMessage = document.getElementById('navbar-notice-message')
+  || document.getElementById('demo-feature-message');
+const navbarNoticeClose = document.getElementById('navbar-notice-close')
+  || document.getElementById('demo-feature-close');
 
 // Playback timers and transient runtime state.
 const failedPlaybackTrackIndices = new Set();
 let playbackRecoveryTimer = null;
 let playbackLoadTimer = null;
 let playbackStatusTimer = null;
+let navbarNoticeTimer = null;
 let seekingIsAvailable = false;
 let pendingResumeTime = null;
 let playbackSessionSaveTimer = null;
 let playbackSessionIsReady = false;
 let volumeBeforeMute = DEFAULT_VOLUME;
 let tooltipTarget = null;
+let draggedTrackIndex = null;
+let draggedPlaylistId = null;
+let suppressTrackActivationUntil = 0;
 
 // ======================== GENERAL UI HELPERS ========================
 function formatTime(seconds){
@@ -614,6 +643,26 @@ function setButtonTooltip(button, label){
   if (tooltipTarget === button && cursorTooltip.classList.contains('is-visible')){
     cursorTooltip.textContent = label;
   }
+}
+
+// --- Reusable notice for lightweight navbar messages ---
+function hideNavbarNotice(){
+  clearTimeout(navbarNoticeTimer);
+  navbarNoticeTimer = null;
+  if (!navbarNotice) return;
+  navbarNotice.hidden = true;
+}
+
+function showNavbarNotice(title, message){
+  if (!navbarNotice || !navbarNoticeTitle || !navbarNoticeMessage) return false;
+
+  navbarNoticeTitle.textContent = title;
+  navbarNoticeMessage.textContent = message;
+  navbarNotice.hidden = false;
+
+  clearTimeout(navbarNoticeTimer);
+  navbarNoticeTimer = setTimeout(hideNavbarNotice, 5000);
+  return true;
 }
 
 // --- Progress and volume UI ---
@@ -729,7 +778,7 @@ function getOpenPlaylistModal(){
 function syncDialogBackgroundInert(){
   const dialogIsOpen = Boolean(getOpenPlaylistModal());
 
-  [appShell, playerBar, playbackStatus, playlistToast].forEach(element => {
+  [appShell, playerBar, playbackStatus, playlistToast, navbarNotice].forEach(element => {
     element?.toggleAttribute('inert', dialogIsOpen);
   });
 }
@@ -1454,6 +1503,143 @@ function sortTrackEntries(trackEntries, sortKey){
   return sortedTracks;
 }
 
+// ======================== CUSTOM PLAYLIST REORDERING ========================
+function activePlaylistCanBeReordered(query = ""){
+  return Boolean(getCustomPlaylistRecord(state.activePlaylistId))
+    && getActivePlaylistSort() === "order"
+    && !query.trim();
+}
+
+function clearTrackDropIndicators(){
+  trackListEl.querySelectorAll('.track-row').forEach(row => {
+    row.classList.remove('is-drop-before', 'is-drop-after');
+  });
+}
+
+function clearTrackDragState(){
+  clearTrackDropIndicators();
+  trackListEl.querySelectorAll('.track-row').forEach(row => {
+    row.classList.remove('is-dragging');
+  });
+  draggedTrackIndex = null;
+  draggedPlaylistId = null;
+}
+
+function announceTrackReorder(trackIndex, position, totalTracks){
+  if (!trackReorderStatus) return;
+  const track = tracks[trackIndex];
+  trackReorderStatus.textContent = `${track.title} moved to position ${position} of ${totalTracks}.`;
+}
+
+function finishCustomPlaylistReorder(playlist, movedTrackIndex){
+  saveCustomPlaylists();
+  renderTrackList();
+
+  if (state.playingPlaylistId === playlist.id){
+    updateNowPlayingPanel();
+  }
+
+  const newPosition = playlist.trackIndices.indexOf(movedTrackIndex);
+  announceTrackReorder(movedTrackIndex, newPosition + 1, playlist.trackIndices.length);
+  trackListEl.querySelector(`[data-index="${movedTrackIndex}"]`)?.focus();
+}
+
+function reorderCustomPlaylistTrack(playlistId, movedTrackIndex, targetTrackIndex, placeAfter){
+  const playlist = getCustomPlaylistRecord(playlistId);
+  if (!playlist || movedTrackIndex === targetTrackIndex) return false;
+
+  const reorderedTracks = [...playlist.trackIndices];
+  const sourcePosition = reorderedTracks.indexOf(movedTrackIndex);
+  if (sourcePosition === -1 || !reorderedTracks.includes(targetTrackIndex)) return false;
+
+  reorderedTracks.splice(sourcePosition, 1);
+  const targetPosition = reorderedTracks.indexOf(targetTrackIndex);
+  const insertionPosition = targetPosition + (placeAfter ? 1 : 0);
+  reorderedTracks.splice(insertionPosition, 0, movedTrackIndex);
+
+  if (reorderedTracks.every((trackIndex, index) => trackIndex === playlist.trackIndices[index])){
+    return false;
+  }
+
+  playlist.trackIndices = reorderedTracks;
+  finishCustomPlaylistReorder(playlist, movedTrackIndex);
+  return true;
+}
+
+function moveCustomPlaylistTrackByKeyboard(trackIndex, direction){
+  if (!activePlaylistCanBeReordered(searchInput?.value || "")) return false;
+
+  const playlist = getCustomPlaylistRecord(state.activePlaylistId);
+  const currentPosition = playlist.trackIndices.indexOf(trackIndex);
+  const nextPosition = currentPosition + direction;
+
+  if (currentPosition === -1 || nextPosition < 0 || nextPosition >= playlist.trackIndices.length){
+    return false;
+  }
+
+  playlist.trackIndices.splice(currentPosition, 1);
+  playlist.trackIndices.splice(nextPosition, 0, trackIndex);
+  finishCustomPlaylistReorder(playlist, trackIndex);
+  return true;
+}
+
+function addTrackReorderListeners(row){
+  if (!row.classList.contains('is-reorderable')) return;
+
+  row.addEventListener('dragstart', event => {
+    draggedTrackIndex = Number(row.dataset.index);
+    draggedPlaylistId = state.activePlaylistId;
+    suppressTrackActivationUntil = Date.now() + 400;
+    row.classList.add('is-dragging');
+
+    if (event.dataTransfer){
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(draggedTrackIndex));
+    }
+  });
+
+  row.addEventListener('dragover', event => {
+    if (draggedPlaylistId !== state.activePlaylistId
+      || !Number.isInteger(draggedTrackIndex)
+      || Number(row.dataset.index) === draggedTrackIndex){
+      return;
+    }
+
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+
+    const bounds = row.getBoundingClientRect();
+    const placeAfter = event.clientY > bounds.top + (bounds.height / 2);
+    clearTrackDropIndicators();
+    row.classList.add(placeAfter ? 'is-drop-after' : 'is-drop-before');
+  });
+
+  row.addEventListener('dragleave', event => {
+    if (event.relatedTarget && row.contains(event.relatedTarget)) return;
+    row.classList.remove('is-drop-before', 'is-drop-after');
+  });
+
+  row.addEventListener('drop', event => {
+    if (draggedPlaylistId !== state.activePlaylistId || !Number.isInteger(draggedTrackIndex)) return;
+
+    event.preventDefault();
+    const bounds = row.getBoundingClientRect();
+    const placeAfter = event.clientY > bounds.top + (bounds.height / 2);
+    const targetTrackIndex = Number(row.dataset.index);
+    const playlistId = draggedPlaylistId;
+    const movedTrackIndex = draggedTrackIndex;
+
+    clearTrackDragState();
+    suppressTrackActivationUntil = Date.now() + 400;
+    reorderCustomPlaylistTrack(playlistId, movedTrackIndex, targetTrackIndex, placeAfter);
+  });
+
+  row.addEventListener('dragend', () => {
+    suppressTrackActivationUntil = Date.now() + 400;
+    clearTrackDragState();
+  });
+}
+
 // ======================== CREATE, RENAME AND DELETE PLAYLISTS ========================
 function createCustomPlaylistId(){
   const randomPart = Math.random().toString(36).slice(2, 9);
@@ -2043,6 +2229,18 @@ function togglePlaylistDestination(destinationId){
 }
 
 // ======================== PLAYLIST VIEW ========================
+function openPlaylistView(playlistId){
+  if (!getPlaylist(playlistId)) return false;
+
+  state.activePlaylistId = playlistId;
+  hideNavbarNotice();
+  closePlaylistActionsMenu();
+  updatePlaylistView();
+  savePlaybackSession();
+  closeSidebarDrawer();
+  return true;
+}
+
 function updateHeroDetails(){
   const playlist = getPlaylist();
   const trackCount = playlist.trackIndices.length;
@@ -2081,6 +2279,7 @@ function renderTrackList(query = ""){
   const isLikedSongsView = state.activePlaylistId === "liked-songs";
   const isCustomPlaylistView = Boolean(getCustomPlaylistRecord(state.activePlaylistId));
   const isManagedPlaylistView = isLikedSongsView || isCustomPlaylistView;
+  const canReorderTracks = activePlaylistCanBeReordered(query);
   const safePlaylistName = escapeHtml(playlist.name);
   let matchingTracks = playlist.trackIndices
     .map((trackIndex, position) => ({
@@ -2118,8 +2317,10 @@ function renderTrackList(query = ""){
 
   trackListEl.innerHTML = matchingTracks.map(({ track: t, trackIndex }, displayPosition) => `
     <div
-      class="track-row"
+      class="track-row${canReorderTracks ? " is-reorderable" : ""}"
       data-index="${trackIndex}"
+      data-position="${displayPosition}"
+      ${canReorderTracks ? 'draggable="true" aria-describedby="track-reorder-help" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"' : ''}
       tabindex="0"
       role="button"
       aria-label="Play ${t.title} by ${t.artist}"
@@ -2127,9 +2328,10 @@ function renderTrackList(query = ""){
       <span class="col-index">
         <span class="idx-num">${displayPosition + 1}</span>
         <span class="eq"><span></span><span></span><span></span><span></span></span>
+        <span class="material-symbols-rounded track-drag-indicator" aria-hidden="true">drag_indicator</span>
       </span>
       <span class="col-title">
-        <img class="t-thumb" src="${t.cover}" alt="">
+        <img class="t-thumb" src="${t.cover}" alt="" draggable="false">
         <span class="t-text">
           <span class="t-title">${t.title}</span>
           <span class="t-artist">${t.artist}</span>
@@ -2169,6 +2371,8 @@ function renderTrackList(query = ""){
   });
 
   const activateTrackRow = row => {
+    if (Date.now() < suppressTrackActivationUntil) return;
+
     const idx = Number(row.dataset.index);
     const selectedPlaylistIsPlaying = state.activePlaylistId === state.playingPlaylistId;
 
@@ -2181,8 +2385,23 @@ function renderTrackList(query = ""){
   };
 
   trackListEl.querySelectorAll('.track-row').forEach(row => {
+    addTrackReorderListeners(row);
     row.addEventListener('click', () => activateTrackRow(row));
     row.addEventListener('keydown', event => {
+      const isReorderShortcut = event.altKey
+        && !event.ctrlKey
+        && !event.metaKey
+        && (event.key === 'ArrowUp' || event.key === 'ArrowDown');
+
+      if (event.target === row && isReorderShortcut && row.classList.contains('is-reorderable')){
+        event.preventDefault();
+        moveCustomPlaylistTrackByKeyboard(
+          Number(row.dataset.index),
+          event.key === 'ArrowUp' ? -1 : 1
+        );
+        return;
+      }
+
       const isActivationKey =
         event.key === 'Enter' || event.key === ' ' || event.code === 'Space';
 
@@ -2549,6 +2768,25 @@ forward10Btn?.addEventListener('click', () => seekBy(10));
 volumeButton?.addEventListener('click', toggleMute);
 playbackStatusClose?.addEventListener('click', hidePlaybackStatus);
 
+// Functional navbar navigation and notices.
+homeBtn?.addEventListener('click', () => openPlaylistView(DEFAULT_PLAYLIST_ID));
+browseBtn?.addEventListener('click', () => openPlaylistView(BROWSE_PLAYLIST_ID));
+notificationsBtn?.addEventListener('click', () => {
+  if (notificationDot) notificationDot.hidden = true;
+  showNavbarNotice("Notifications", "You’re all caught up.");
+});
+
+// Demo-only actions keep their layout while clearly explaining their status.
+demoFeatureButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    showNavbarNotice(
+      button.dataset.demoFeature,
+      "This is currently a demo feature and will be added in a future Musicozy update."
+    );
+  });
+});
+navbarNoticeClose?.addEventListener('click', hideNavbarNotice);
+
 // Responsive sidebar and Now Playing drawers.
 sidebarToggleBtn?.addEventListener('click', () => {
   if (document.body.classList.contains('sidebar-drawer-open')){
@@ -2576,17 +2814,7 @@ playlistsEl.addEventListener('click', event => {
   if (!item) return;
 
   event.preventDefault();
-  closePlaylistActionsMenu();
-  const playlistId = item.dataset.playlistId;
-  if (!getPlaylist(playlistId)) return;
-
-  if (playlistId !== state.activePlaylistId){
-    state.activePlaylistId = playlistId;
-    updatePlaylistView();
-  }
-
-  savePlaybackSession();
-  closeSidebarDrawer();
+  openPlaylistView(item.dataset.playlistId);
 });
 
 playlistFavoriteBtn.addEventListener('click', toggleActivePlaylistFavorite);
@@ -2766,6 +2994,12 @@ document.addEventListener('keydown', event => {
   if (document.body.classList.contains('sidebar-drawer-open')
     || document.body.classList.contains('now-playing-drawer-open')){
     closeResponsiveDrawers(true);
+    return;
+  }
+
+  if (navbarNotice && !navbarNotice.hidden){
+    event.preventDefault();
+    hideNavbarNotice();
     return;
   }
 
