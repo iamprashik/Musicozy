@@ -78,7 +78,7 @@
           aria-controls="sidebar"
           aria-expanded="false"
         ><span class="material-symbols-rounded">menu</span></button>
-        <button class="round-btn has-tooltip" type="button" data-tooltip="Home" data-tooltip-variant="dark" aria-label="Home"><span class="material-symbols-rounded">home</span></button>
+        <button class="round-btn has-tooltip" id="home-btn" type="button" data-tooltip="Home" data-tooltip-variant="dark" aria-label="Home"><span class="material-symbols-rounded">home</span></button>
         <div class="search-bar">
           <span class="material-symbols-rounded search-icon has-tooltip" data-tooltip="Search" data-tooltip-variant="dark">search</span>
           <input type="text" class="search-input" id="search-input" placeholder="What do you want to play?" aria-label="Search songs" autocomplete="off">
@@ -86,23 +86,28 @@
             <span class="material-symbols-rounded">close</span>
           </button>
           <span class="search-divider">|</span>
-          <button class="browse-btn has-tooltip" type="button" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse">
+          <button class="browse-btn has-tooltip" id="browse-btn" type="button" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse all songs">
             <span class="material-symbols-rounded browse-icon">grid_view</span>
           </button>
         </div>
       </div>
       <!-- Premium overlaps the panel boundary by one quarter of its width. -->
-      <button class="premium-btn has-tooltip" type="button" data-tooltip="Upgrade to Premium">Explore Premium</button>
+      <button
+        class="premium-btn has-tooltip"
+        type="button"
+        data-tooltip="Upgrade to Premium"
+        data-demo-feature="Explore Premium"
+      >Explore Premium</button>
     </div>
 
     <!-- Now Playing controls: Install, Notifications and profile -->
     <div class="now-playing-nav-zone">
-      <button class="install-btn" type="button">
+      <button class="install-btn" type="button" data-demo-feature="Install App">
         <span class="material-symbols-rounded">download</span>
         Install App
       </button>
-      <button class="icon-btn bell-btn has-tooltip" type="button" data-tooltip="What's New" data-tooltip-variant="dark" aria-label="Notifications">
-        <span class="bell-dot"></span><span class="material-symbols-rounded">notifications</span>
+      <button class="icon-btn bell-btn has-tooltip" id="notifications-btn" type="button" data-tooltip="Notifications" data-tooltip-variant="dark" aria-label="Notifications">
+        <span class="bell-dot" id="notification-dot" aria-hidden="true"></span><span class="material-symbols-rounded">notifications</span>
       </button>
       <div class="header-user">
         <div class="avatar has-tooltip" data-tooltip="Prashik" data-tooltip-variant="dark">P</div>
@@ -228,6 +233,10 @@
         <div class="track-list" id="track-list" aria-live="polite">
           <!-- Song rows are injected by script.js. -->
         </div>
+        <p class="visually-hidden" id="track-reorder-help">
+          Drag a song row to change its position. Keyboard users can press Alt plus Arrow Up or Arrow Down.
+        </p>
+        <p class="visually-hidden" id="track-reorder-status" role="status" aria-live="polite" aria-atomic="true"></p>
       </section>
       </div>
     </div>
@@ -524,6 +533,18 @@
   <span class="material-symbols-rounded playlist-toast-heart">favorite</span>
   <span class="playlist-toast-message" id="playlist-toast-message">Added to Liked Songs.</span>
   <button class="playlist-toast-change" id="playlist-toast-change" type="button">Change</button>
+</div>
+
+<!-- Shared notice used by demo-only features and lightweight navbar messages -->
+<div class="demo-feature-toast" id="demo-feature-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+  <span class="material-symbols-rounded demo-feature-icon" aria-hidden="true">info</span>
+  <span class="demo-feature-copy">
+    <strong id="demo-feature-title">Musicozy</strong>
+    <span id="demo-feature-message">Notification message</span>
+  </span>
+  <button class="demo-feature-close" id="demo-feature-close" type="button" aria-label="Dismiss message">
+    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+  </button>
 </div>
 
 <!-- ======================== MEDIA AND SCRIPTS ======================== -->
