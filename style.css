@@ -1025,7 +1025,7 @@ button:focus-visible, a:focus-visible{
   width: var(--premium-button-width);
   left: calc(var(--panel-gap) + var(--premium-quarter));
   margin-left: 0;
-  margin-right: 0;
+  margin-right: 20px;
 }
 
 .search-bar{
