@@ -69,3 +69,9 @@ Project license boundary
 The repository's MIT License covers Musicozy's original HTML, CSS, and JavaScript source code. It does not relicense third-party audio, photography, fonts, icons, trademarks, or externally hosted services.
 
 Musicozy is an independent educational portfolio project and is not affiliated with or endorsed by Spotify.
+
+Project license boundary
+
+The repository's MIT License covers Musicozy's original HTML, CSS, and JavaScript source code. It does not relicense third-party audio, photography, fonts, icons, trademarks, or externally hosted services.
+
+Musicozy is an independent educational portfolio project and is not affiliated with or endorsed by Spotify.
