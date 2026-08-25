@@ -4,7 +4,7 @@ Musicozy's interface and application source code were created by Prashik Koirala
 
 Music
 
-The OpenGameArt source pages identify all six recordings as Creative Commons CC0. Creator credits are included here to respect the attribution notices shown on those pages.
+The OpenGameArt source pages identify all six recording as Creative Commons CC0. Creator credits are included here to respect the attribution notices shown on those pages.
 
 Track displayed in Musicozy
 
