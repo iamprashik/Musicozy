@@ -7,7 +7,17 @@
      ================================================================ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Musicozy — Late Night Drive</title>
+<meta name="description" content="Musicozy is a responsive, Spotify-inspired music player built with HTML, CSS and vanilla JavaScript.">
+<meta name="author" content="Prashik Koirala">
+<meta name="application-name" content="Musicozy">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Musicozy — Music Player">
+<meta property="og:description" content="A responsive music player with playlists, persistent likes, custom covers and keyboard controls.">
+<meta name="twitter:card" content="summary">
+<title>Musicozy — Music Player</title>
+<link rel="icon" type="image/png" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
@@ -87,7 +97,7 @@
           </button>
           <span class="search-divider">|</span>
           <button class="browse-btn has-tooltip" id="browse-btn" type="button" data-tooltip="Browse" data-tooltip-variant="dark" aria-label="Browse all songs">
-            <span class="material-symbols-rounded browse-icon">grid_view</span>
+            <span class="material-symbols-rounded">grid_view</span>
           </button>
         </div>
       </div>
@@ -124,7 +134,7 @@
         <div class="hero-art">
           <img id="hero-art" src="https://picsum.photos/seed/amberdrive/300/300" alt="Late Night Drive artwork">
         </div>
-        <div class="hero-info">
+        <div>
           <span class="hero-eyebrow">Playlist</span>
           <h1 class="hero-title" id="hero-title">Late Night Drive</h1>
           <p class="hero-meta" id="hero-meta">Prashik · 6 CC0 tracks · Dreamy synthwave and slow-burn electronic grooves for the road after everyone else is asleep.</p>
@@ -554,7 +564,6 @@
 <!-- Shared tooltip used by the navbar, brand and player controls. -->
 <div id="cursor-tooltip" class="cursor-tooltip"></div>
 
-<!-- Keep this filename unchanged when replacing the JavaScript file. -->
 <script src="script.js"></script>
 </body>
 </html>
