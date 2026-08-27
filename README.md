@@ -16,7 +16,7 @@ Try Musicozy in your browser: [Open the live demo](https://iamprashik.github.io/
 
 ### Mobile
 
-![Musicozy mobile screenshot](screenshots/musicozy_mobile.jpeg)
+<img src="screenshots/musicozy_mobile.jpeg" alt="Musicozy mobile screenshot" width="320">
 
 > [!NOTE]
 > Musicozy is an independent educational project. It is not affiliated with, endorsed by, or connected to Spotify.
