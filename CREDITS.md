@@ -1,5 +1,4 @@
 # Musicozy Credits
-
 > Third-party media and resources used by the Musicozy portfolio project.
 
 Musicozy's interface and original application code were created by
