@@ -1,71 +1,103 @@
-Musicozy credits
+# Musicozy Credits
 
-Musicozy's interface and application source code were created by Prashik Koirala. The project also uses the third-party resources listed below.
+> Third-party media and resources used by the Musicozy portfolio project.
 
-Music
+Musicozy's interface and original application code were created by
+**Prashik Koirala**.
 
-The OpenGameArt source pages identify all six recordings as Creative Commons CC0. Creator credits are included here to respect the attribution notices shown on those pages.
+---
 
-Track displayed in Musicozy
+## License Summary
 
-Credited creator
+| Resource | Used for | License or terms |
+| :--- | :--- | :--- |
+| Musicozy source code | Interface and application logic | [MIT License](./LICENSE) |
+| Six music tracks | Demonstration playback | [Creative Commons CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Lorem Picsum / Unsplash | Placeholder cover artwork | [Unsplash License](https://unsplash.com/license) |
+| Google Fonts | Typography and icons | Publisher-provided licenses |
 
-Source
+---
 
-Synth Wave by Alex
+## Music Credits
 
-Alex McCulloch / Pro Sensory
+The source pages identify all six recordings as **CC0**. The creators are still
+credited below out of respect for the attribution notices on those pages.
 
-OpenGameArt
+### 1. Synth Wave by Alex
 
-Nighttime Solitude
+- **Creator:** Alex McCulloch / Pro Sensory
+- **Source:** [OpenGameArt](https://opengameart.org/content/synth-wave-by-alex)
+- **License:** CC0 1.0
 
-celestialghost8
+### 2. Nighttime Solitude
 
-OpenGameArt
+- **Creator:** celestialghost8
+- **Source:** [OpenGameArt](https://opengameart.org/content/nighttime-solitude)
+- **License:** CC0 1.0
 
-Synthwave 421k
+### 3. Synthwave 421k
 
-The Cynic Project / cynicmusic
+- **Creator:** The Cynic Project / cynicmusic
+- **Source:** [OpenGameArt](https://opengameart.org/content/calm-relax-1-synthwave-421k)
+- **License:** CC0 1.0
 
-OpenGameArt
+### 4. Synthwave 4k
 
-Synthwave 4k
+- **Creator:** The Cynic Project / cynicmusic
+- **Source:** [OpenGameArt](https://opengameart.org/content/calm-ambient-1-synthwave-4k)
+- **License:** CC0 1.0
 
-The Cynic Project / cynicmusic
+### 5. Synthwave 15k
 
-OpenGameArt
+- **Creator:** The Cynic Project / cynicmusic
+- **Source:** [OpenGameArt](https://opengameart.org/content/calm-ambient-2-synthwave-15k)
+- **License:** CC0 1.0
 
-Synthwave 15k
+### 6. Synth Wave
 
-The Cynic Project / cynicmusic
+- **Creator:** Alex McCulloch / Pro Sensory
+- **Source:** [OpenGameArt](https://opengameart.org/content/synth-wave)
+- **License:** CC0 1.0
 
-OpenGameArt
+> **Playback note:** Musicozy streams the tracks from OpenGameArt instead of
+> redistributing local copies. If a source URL changes, that track may stop
+> playing until its URL is updated.
 
-Synth Wave
+---
 
-Alex McCulloch / Pro Sensory
+## Placeholder Artwork
 
-OpenGameArt
+Default playlist and track covers are loaded from
+[Lorem Picsum](https://picsum.photos/), which serves images from
+[Unsplash](https://unsplash.com/).
 
-Musicozy streams these files from OpenGameArt rather than redistributing copies. If a source file or its hosting URL changes, playback for that track may stop until the URL is updated.
+These covers are presentation placeholders. For a fully self-contained
+production release, they should be replaced with locally hosted artwork that is
+owned or separately licensed.
 
-Placeholder artwork
+---
 
-Default playlist and track covers are loaded from Lorem Picsum, which serves images from Unsplash. Their use is governed by the current Unsplash License.
+## Fonts and Icons
 
-The covers are presentation placeholders and can change if the external service changes. For a fully self-contained production deployment, replace them with locally hosted artwork that you own or have separately licensed.
+- **Fraunces**, **Inter**, and **JetBrains Mono** are served through
+  [Google Fonts](https://fonts.google.com/).
+- **Material Symbols Rounded** is served through
+  [Google Fonts Icons](https://fonts.google.com/icons).
+- Each resource remains subject to the license supplied by its publisher.
 
-Fonts and icons
+---
 
-Fraunces, Inter, and JetBrains Mono are served through Google Fonts.
+## Project License
 
-Material Symbols Rounded is served through Google Fonts Icons.
+The repository's [MIT License](./LICENSE) covers Musicozy's original HTML, CSS,
+and JavaScript source code.
 
-Each font or icon resource remains subject to the license supplied by its publisher.
+It does **not** relicense third-party audio, photography, fonts, icons,
+trademarks, or externally hosted services.
 
-Project license boundary
+---
 
-The repository's MIT License covers Musicozy's original HTML, CSS, and JavaScript source code. It does not relicense third-party audio, photography, fonts, icons, trademarks, or externally hosted services.
+## Disclaimer
 
-Musicozy is an independent educational portfolio project and is not affiliated with or endorsed by Spotify.
+Musicozy is an independent educational portfolio project. It is not affiliated
+with, sponsored by, or endorsed by Spotify.
