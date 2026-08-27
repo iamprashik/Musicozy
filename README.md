@@ -4,12 +4,16 @@ Musicozy is a responsive, Spotify-inspired music player built as a front-end por
 
 It combines working audio playback with persistent likes, custom playlists, cover uploads, sorting, search, recently played history, keyboard controls, and a responsive three-panel interface.
 
+## Live Demo
+
+Try Musicozy in your browser: [Open the live demo](https://iamprashik.github.io/Musicozy/).
+
 > [!NOTE]
 > Musicozy is an independent educational project. It is not affiliated with, endorsed by, or connected to Spotify.
 
 ## Project status
 
-Version 1.0 release candidate. The core experience is complete and has been regression-tested on desktop and responsive layouts.
+Version 1.0 — live on GitHub Pages. The core experience is complete and has been regression-tested on desktop and responsive layouts.
 
 ## Highlights
 
@@ -42,7 +46,7 @@ There is no framework, package installation, build command, account, or back-end
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/iamprashik/musicozy.git
+   git clone https://github.com/iamprashik/Musicozy.git
    cd musicozy
    ```
 
