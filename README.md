@@ -8,6 +8,16 @@ It combines working audio playback with persistent likes, custom playlists, cove
 
 Try Musicozy in your browser: [Open the live demo](https://iamprashik.github.io/Musicozy/).
 
+## Screenshots
+
+### Desktop
+
+![Musicozy desktop screenshot](screenshots/musicozy_desktop.png)
+
+### Mobile
+
+![Musicozy mobile screenshot](screenshots/musicozy_mobile.jpeg)
+
 > [!NOTE]
 > Musicozy is an independent educational project. It is not affiliated with, endorsed by, or connected to Spotify.
 
@@ -47,7 +57,7 @@ There is no framework, package installation, build command, account, or back-end
 
    ```bash
    git clone https://github.com/iamprashik/Musicozy.git
-   cd musicozy
+   cd Musicozy
    ```
 
 2. Confirm these root files are present: `index.html`, `style.css`, `script.js`, and `logo.png`.
@@ -100,6 +110,9 @@ musicozy/
 ├── README.md
 ├── CREDITS.md
 ├── LICENSE
+├── screenshots/
+│   ├── musicozy_desktop.png
+│   └── musicozy_mobile.jpeg
 └── .gitignore
 ```
 
